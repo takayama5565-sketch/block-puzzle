@@ -191,6 +191,7 @@
         #ranking-board { max-height: 150px; overflow-y: auto; text-align: left; font-size: 14px; margin-top: 15px; border-top: 2px solid #334155; padding-top: 10px;}
         .rank-item { padding: 6px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between;}
 
+        /* スポンサー枠のレイアウト */
         #sponsor-container {
             flex: 0 0 60px;
             background: #000;
@@ -238,8 +239,8 @@
         <div id="left-panel">
             <h2 class="pc-title">ブロック計算パズル<br><span style="font-size:14px; color:#aaa;">グローバルモード</span></h2>
             
-            <button class="action-btn save-btn" id="resume-btn" onclick="openLoadModal()">続きから遊ぶ</button>
-            <button class="action-btn save-btn" id="save-quit-btn" onclick="saveAndQuitGame()">セーブして終わる</button>
+            <button class="action-btn save-btn" id="resume-btn" onclick="openLoadModal()" style="display:none;">▶️ 続きから遊ぶ</button>
+            <button class="action-btn save-btn" id="save-quit-btn" onclick="saveAndQuitGame()" style="display:none;">💾 セーブして終わる</button>
 
             <div class="setting-group">
                 <label>計算のレベル</label>
@@ -449,6 +450,20 @@ let recentProblems = [];
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+// 💡 iPhoneの音消え対策：画面のアクション時にスリープを解除する
+function initAudio() { 
+    try { 
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume(); 
+        }
+    } catch(e){} 
+}
+// 画面をタッチしたりクリックしたりするたびにスピーカーを起こす
+document.addEventListener('touchstart', initAudio, { passive: true });
+document.addEventListener('mousedown', initAudio, { passive: true });
+document.addEventListener('keydown', initAudio, { passive: true });
+
+
 const SHAPES = [
     [], 
     [[1,1,1,1]], 
@@ -515,7 +530,6 @@ function updateScoreDisplay() {
 }
 function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} }
 
-function initAudio() { try { if (audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }
 
 function playExplosion(comboCount, isBigBang = false) {
     try {
