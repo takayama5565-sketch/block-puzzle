@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Math & Tetris - 究極安定版 -</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        html, body { height: 100dvh; margin: 0; padding: 0; overflow: hidden; touch-action: none; background-color: #090910; color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; -webkit-user-select: none; }
+        
+        #app-wrapper { display: flex; flex-direction: column; height: 100dvh; max-width: 500px; margin: 0 auto; box-sizing: border-box; padding: 5px; position: relative;}
+        
+        #header { flex: 0 0 50px; display: flex; justify-content: space-between; align-items: center; background: #12121f; border-bottom: 2px solid #00ffff; padding: 0 10px; border-radius: 8px 8px 0 0; box-shadow: 0 4px 10px rgba(0,255,255,0.2);}
+        .title-area { display: flex; flex-direction: column; }
+        h1 { color: #00ffff; font-size: 18px; margin: 0; text-shadow: 0 0 5px #00ffff; }
+        #speed-level-display { font-size: 10px; color: #aaa; }
+        .score-area { text-align: right; }
+        #score-display { font-size: 20px; font-weight: bold; color: #ff00ff; margin: 0; text-shadow: 0 0 5px #ff00ff;}
+        #combo-display { font-size: 10px; color: #fff; display: block;}
+        
+        .top-btns { display: flex; gap: 5px; }
+        .icon-btn { background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 5px 10px; font-size: 14px; cursor: pointer; }
+        .icon-btn:active { background: #555; }
+
+        #game-area { flex: 1 1 auto; position: relative; display: flex; justify-content: center; align-items: center; padding: 10px 0; min-height: 0; }
+        #canvas-container { height: 100%; aspect-ratio: 1 / 2; position: relative; max-width: 100%; }
+        #gameCanvas, #particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
+        #gameCanvas { background-color: #050510; border: 2px solid #00ffff; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); box-sizing: border-box; }
+        #particleCanvas { z-index: 5; pointer-events: none; }
+        
+        #next-box { position: absolute; top: 5px; right: 5px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid #00ffff; border-radius: 6px; z-index: 6; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 10px #000;}
+        #nextCanvas { width: 100%; height: 100%; }
+
+        #bottom-ui { flex: 0 0 220px; background: #12121f; border-top: 2px solid #ff00ff; border-radius: 0 0 8px 8px; padding: 10px; position: relative; box-shadow: 0 -4px 10px rgba(255,0,255,0.2);}
+
+        #math-ui { display: flex; flex-direction: column; height: 100%; justify-content: space-between; }
+        #math-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        #math-status { color: #ff9800; font-size: 14px; font-weight: bold; }
+        
+        .math-row { display: flex; align-items: center; justify-content: space-between; background: #000; border: 2px dashed #ffff00; border-radius: 8px; padding: 5px 15px; margin-bottom: 5px;}
+        #math-problem { font-size: 26px; font-weight: bold; color: #ffff00; transition: 0.2s;}
+        #fake-input { font-size: 26px; font-weight: bold; color: #fff; background: #222; padding: 2px 15px; border-radius: 6px; min-width: 60px; text-align: right; border: 1px solid #555;}
+        
+        #numpad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 1; }
+        .num-btn { background: #333; color: #fff; border: 2px solid #555; border-radius: 8px; font-size: 22px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 0 #111; transition: 0.1s;}
+        .num-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #111; background: #666; }
+        .num-btn.del { background: #ff0055; border-color: #cc0044; box-shadow: 0 4px 0 #880022;}
+        .num-btn.enter { background: #00ccff; color: #000; border-color: #0099cc; box-shadow: 0 4px 0 #006688; grid-column: span 2;}
+        .num-btn.zero { grid-column: span 2; }
+
+        #tetris-ui { display: none; flex-direction: column; height: 100%; justify-content: space-between; }
+        #t-status { color: #39ff14; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px;}
+        #t-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 1;}
+        .t-btn { background: #222; color: #00ffff; border: 2px solid #00ffff; border-radius: 12px; font-size: 28px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 0 #008888; transition: 0.1s;}
+        .t-btn:active { transform: translateY(6px); box-shadow: 0 0 0 #008888; background: #00ffff; color: #000;}
+        .btn-drop { grid-column: span 4; background: linear-gradient(180deg, #ff00ff, #cc00cc); color: white; border: none; box-shadow: 0 6px 0 #880088; font-size: 22px;}
+        .btn-drop:active { box-shadow: 0 0 0 #880088; background: #fff; color: #ff00ff;}
+
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .modal-box { background: #12121f; border: 2px solid #00ffff; border-radius: 12px; padding: 20px; width: 100%; max-width: 350px; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
+        .modal h2 { color: #00ffff; margin-top: 0; text-align: center;}
+        
+        .setting-group { margin-bottom: 15px; }
+        .setting-group label { font-size: 12px; color: #00ffff; display: block; margin-bottom: 5px;}
+        select { width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #555; border-radius: 6px; font-size: 16px; font-weight:bold;}
+        
+        .action-btn { width: 100%; padding: 15px; background: #ff00ff; color: #fff; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 0 #cc00cc; transition: 0.1s;}
+        .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cc00cc; background: #fff; color: #ff00ff; }
+        .close-btn { background: #555; box-shadow: 0 4px 0 #333; margin-top: 10px;}
+        .close-btn:active { background: #888; box-shadow: 0 0 0 #333; color: #fff;}
+        
+        #ranking-board { max-height: 300px; overflow-y: auto; text-align: left; font-size: 14px; }
+        .rank-item { padding: 8px 5px; border-bottom: 1px solid #333; display: flex; justify-content: space-between;}
+        .rank-item.highlight { background: rgba(0, 255, 255, 0.2); font-weight: bold; color: #00ffff; border-radius: 4px; }
+
+        .hidden { display: none !important; }
+        
+        .correct-flash { background-color: #39ff14 !important; color: #000 !important; }
+        .error-flash { background-color: #ff0055 !important; color: #fff !important; }
+        .gold-alert { border-color: #FFD700 !important; box-shadow: 0 0 40px #FFD700 !important; }
+        .black-alert { border-color: #ff0000 !important; box-shadow: 0 0 40px #ff0000 !important; }
+        .rainbow-alert { border-color: #ff00ff !important; box-shadow: 0 0 50px #ff00ff !important; }
+        
+        .shake-animation { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 0%, 100% { transform: translate3d(0,0,0); } 20%, 60% { transform: translate3d(-8px,6px,0); } 40%, 80% { transform: translate3d(8px,-6px,0); } }
+        
+        .popup-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #ff00ff; font-size: 40px; font-weight: bold; text-shadow: 0 0 20px #fff; z-index: 20; pointer-events: none; animation: popUp 0.8s forwards; }
+        @keyframes popUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1); } }
+    </style>
+</head>
+<body>
+
+<div id="app-wrapper">
+    <div id="header">
+        <div class="title-area">
+            <h1>MATH TETRIS</h1>
+            <span id="speed-level-display">Lv.1 (SPD: 5)</span>
+        </div>
+        <div class="top-btns">
+            <button class="icon-btn" onclick="openSettings()">⚙️ 設定</button>
+            <button class="icon-btn" onclick="openRanking()">🏆 順位</button>
+        </div>
+        <div class="score-area">
+            <p id="score-display">0</p>
+            <span id="combo-display"></span>
+        </div>
+    </div>
+
+    <div id="game-area">
+        <div id="canvas-container">
+            <canvas id="gameCanvas" width="300" height="600"></canvas>
+            <canvas id="particleCanvas" width="300" height="600"></canvas>
+            <div id="next-box"><canvas id="nextCanvas" width="60" height="60"></canvas></div>
+        </div>
+    </div>
+
+    <div id="bottom-ui">
+        <div id="math-ui">
+            <div id="math-header">
+                <span id="math-status">計算を解いてSTART!</span>
+            </div>
+            <div class="math-row" id="problem-box">
+                <div id="math-problem">STARTを押してね</div>
+                <div id="fake-input"></div>
+            </div>
+            <div id="numpad">
+                <div class="num-btn" onclick="inputPad('7')">7</div>
+                <div class="num-btn" onclick="inputPad('8')">8</div>
+                <div class="num-btn" onclick="inputPad('9')">9</div>
+                <div class="num-btn del" onclick="inputPad('DEL')">DEL</div>
+                <div class="num-btn" onclick="inputPad('4')">4</div>
+                <div class="num-btn" onclick="inputPad('5')">5</div>
+                <div class="num-btn" onclick="inputPad('6')">6</div>
+                <div class="num-btn" onclick="inputPad('-')">－</div>
+                <div class="num-btn" onclick="inputPad('1')">1</div>
+                <div class="num-btn" onclick="inputPad('2')">2</div>
+                <div class="num-btn" onclick="inputPad('3')">3</div>
+                <div class="num-btn" onclick="inputPad('.')">．</div>
+                <div class="num-btn zero" onclick="inputPad('0')">0</div>
+                <div class="num-btn enter" onclick="submitAnswer()">ENTER</div>
+            </div>
+        </div>
+
+        <div id="tetris-ui">
+            <div id="t-status">ACCESS GRANTED! 操作可能</div>
+            <div id="t-controls">
+                <div class="t-btn" onclick="moveLeft()">◀</div>
+                <div class="t-btn" onclick="dropOne()">▼</div>
+                <div class="t-btn" onclick="rotatePiece()">↻</div>
+                <div class="t-btn" onclick="moveRight()">▶</div>
+                <div class="t-btn btn-drop" onclick="hardDrop()">⏬ 一気に落下</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-box">
+            <h2>⚙️ GAME SETTINGS</h2>
+            <div class="setting-group">
+                <label>計算レベル</label>
+                <select id="level">
+                    <option value="1">Lv1: 1桁 足し引き (10補数)</option>
+                    <option value="2">Lv2: 2桁 足し引き</option>
+                    <option value="3">Lv3: 1桁 掛け算</option>
+                    <option value="4">Lv4: 平方計算</option>
+                    <option value="5">Lv5: 2桁 掛け算</option>
+                    <option value="6">Lv6: 2桁 割り算</option>
+                    <option value="7">Lv7: 円周率</option>
+                    <option value="8">Lv8: カオス (全ランダム)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>初期スピード</label>
+                <select id="speed">
+                    <option value="1">1 (ゆっくり)</option>
+                    <option value="3">3</option>
+                    <option value="5" selected>5 (標準)</option>
+                    <option value="8">8 (速い)</option>
+                    <option value="10">10 (激ムズ)</option>
+                </select>
+            </div>
+            <button class="action-btn" id="start-btn">▶️ PLAY GAME</button>
+            <button class="action-btn close-btn" onclick="closeSettings()" id="close-settings-btn" style="display:none;">閉じる</button>
+        </div>
+    </div>
+
+    <div id="ranking-modal" class="modal hidden">
+        <div class="modal-box">
+            <h2>🏆 RANKING</h2>
+            <div id="ranking-board"></div>
+            <button class="action-btn close-btn" onclick="closeRanking()">閉じる</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-box" style="text-align:center;">
+            <h2 style="color:#ff0055;">SYSTEM DOWN</h2>
+            <p>💀 ブロックが限界を超えました 💀</p>
+            <button class="action-btn" onclick="openSettings()">🔄 REBOOT (設定へ)</button>
+        </div>
+    </div>
+
+    <div id="dq-modal" class="modal hidden">
+        <div class="modal-box">
+            <h2>NEW RECORD!</h2>
+            <p style="font-size:14px; text-align:center;">トップ10にランクイン！<br>名前を記録してください。</p>
+            <input type="text" id="dq-name" maxlength="10" placeholder="NAME (10文字)" autocomplete="off" style="width:100%; padding:15px; font-size:20px; text-align:center; background:#000; color:#00ffff; border:2px solid #00ffff; border-radius:8px; margin-bottom:15px; box-sizing:border-box;">
+            <button class="action-btn" onclick="saveNameRecord()">SAVE RECORD</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==========================================
+// 🔴 【重要】iPhoneの誤操作防止 (ズーム＆スクロール完全禁止)
+// ==========================================
+document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 1) e.preventDefault(); // ピンチズーム禁止
+}, { passive: false });
+
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+    let now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) e.preventDefault(); // ダブルタップズーム禁止
+    lastTouchEnd = now;
+}, { passive: false });
+
+// ==========================================
+// 🔴 Firebaseの設定と安全な起動
+// ==========================================
+// 👇👇👇 ここにあなたのFirebase設定を貼り付けます 👇👇👇
+const firebaseConfig = {
+  apiKey: "AIzaSyDPMTQWtywKFLKHB4wNpCqLV2BsOJedFbc",
+  authDomain: "mathtetris-b53e6.firebaseapp.com",
+  projectId: "mathtetris-b53e6",
+  storageBucket: "mathtetris-b53e6.firebasestorage.app",
+  messagingSenderId: "936743834549",
+  appId: "1:936743834549:web:b82f45ce7c704095b1fffc"
+};
+// 👆👆👆 ここまで 👆👆👆
+
+let db = null;
+let userId = 'UID_GUEST';
+// localStorageのエラーでフリーズするのを防ぐ
+try {
+    let storedId = localStorage.getItem('math_tetris_uid');
+    if (!storedId) {
+        storedId = 'UID_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        localStorage.setItem('math_tetris_uid', storedId);
+    }
+    userId = storedId;
+} catch (e) { console.warn("保存機能が制限されています"); }
+
+try {
+    if (firebaseConfig.apiKey !== "ここにあなたのAPIキー") {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+    }
+} catch(e) { console.error("Firebase通信エラー", e); }
+
+// ==========================================
+// 🎮 ゲームコア変数
+// ==========================================
+const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+const nextCanvas = document.getElementById('nextCanvas'); const nextCtx = nextCanvas.getContext('2d');
+const pCanvas = document.getElementById('particleCanvas'); const pCtx = pCanvas.getContext('2d');
+
+const COLS = 10; const ROWS = 20; const BLOCK_SIZE = 30;
+let board = []; let score = 0; let combo = 0; 
+let currentPiece = null; let nextPiece = null;
+let gameInterval; let dropSpeed = 1000; let currentSpeedLevel = 5;
+let canOperate = false; let currentAnswer = NaN; let isGameOver = true; 
+let problemCount = 0; let piecesPlaced = 0; 
+let currentPlayedLevel = "1"; let problemStartTime = 0; 
+let isNextHidden = false; let finalScoreToSave = 0; let currentInputStr = "";
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const SHAPES = [ [], [[1,1,1,1]], [[2,2],[2,2]], [[0,3,3],[3,3,0]], [[4,4,0],[0,4,4]], [[5,0,0],[5,5,5]], [[0,0,6],[6,6,6]], [[0,7,0],[7,7,7]] ];
+const COLORS = [null, '#FF0055', '#00FFFF', '#39FF14', '#FF5F1F', '#FFFF00', '#0044FF', '#FF00FF', null, '#FFD700', '#444444', '#FFFFFF'];
+
+// --- UI切替管理 ---
+function showMathUI() {
+    document.getElementById('math-ui').style.display = 'flex';
+    document.getElementById('tetris-ui').style.display = 'none';
+}
+function showTetrisUI() {
+    document.getElementById('math-ui').style.display = 'none';
+    document.getElementById('tetris-ui').style.display = 'flex';
+}
+function openSettings() { 
+    document.getElementById('settings-modal').classList.remove('hidden'); 
+    if(!isGameOver) document.getElementById('close-settings-btn').style.display = 'block';
+}
+function closeSettings() { 
+    if(!isGameOver) document.getElementById('settings-modal').classList.add('hidden'); 
+}
+function openRanking() { document.getElementById('ranking-modal').classList.remove('hidden'); loadRanking(); }
+function closeRanking() { document.getElementById('ranking-modal').classList.add('hidden'); }
+
+function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} }
+
+// --- オーディオ ---
+function initAudio() { try { if (audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }
+function playBreakSound(intensity, linesCleared) {
+    try {
+        if (audioCtx.state === 'suspended') return;
+        const time = audioCtx.currentTime;
+        const chord = [1046.50, 1318.51, 1567.98, 2093.00]; 
+        for (let i = 0; i < Math.min(linesCleared, 4); i++) {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.setValueAtTime(chord[i], time + (i * 0.08)); 
+            gain.gain.setValueAtTime(0.4, time + (i * 0.08)); gain.gain.exponentialRampToValueAtTime(0.01, time + (i * 0.08) + 0.6); 
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(time + (i * 0.08)); osc.stop(time + (i * 0.08) + 0.6);
+        }
+        const times = intensity === 'rainbow' || intensity === 'black' ? 25 : (intensity === 'gold' ? 15 : 6); 
+        for (let i = 0; i < times; i++) {
+            setTimeout(() => {
+                if (audioCtx.state === 'suspended') return;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.type = 'square'; osc.frequency.setValueAtTime(80 + Math.random() * 150, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(5, audioCtx.currentTime + 0.3); 
+                gain.gain.setValueAtTime(0.6, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            }, i * 20); 
+        }
+    } catch(e){}
+}
+function playSound(type) {
+    try {
+        if (audioCtx.state === 'suspended') return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if (type === 'correct') { 
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(880, audioCtx.currentTime); osc.frequency.setValueAtTime(1108.73, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        } else if (type === 'error') { 
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.setValueAtTime(140, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        } else if (type === 'levelup') { 
+            osc.type = 'square'; osc.frequency.setValueAtTime(440, audioCtx.currentTime); osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); osc.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+        }
+    } catch(e){}
+}
+
+// --- テンキー処理 ---
+function inputPad(val) {
+    if (canOperate || isGameOver) return;
+    vibrate(10); 
+    if (val === 'DEL') { currentInputStr = currentInputStr.slice(0, -1); } 
+    else {
+        if (val === '-' && currentInputStr.length > 0) return;
+        if (val === '.' && currentInputStr.includes('.')) return;
+        currentInputStr += val;
+    }
+    document.getElementById('fake-input').innerText = currentInputStr;
+}
+
+document.getElementById('level').addEventListener('change', (e) => { currentPlayedLevel = e.target.value; if (!canOperate && !isGameOver && problemCount > 0) generateMathProblem(); });
+document.getElementById('speed').addEventListener('change', (e) => {
+    currentSpeedLevel = parseInt(e.target.value); dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200));
+    document.getElementById('speed-level-display').innerText = `Lv.${Math.floor(piecesPlaced/15)+1} (SPD: ${currentSpeedLevel})`;
+    if (canOperate && !isGameOver && gameInterval) { clearInterval(gameInterval); gameInterval = setInterval(drop, dropSpeed); }
+});
+
+function saveLearningLog(problemStr, uAns, isCorr, timeMs) {
+    if (!db) return;
+    db.collection('learning_logs').add({ userId: userId, level: currentPlayedLevel, problem: problemStr, userAnswer: uAns, isCorrect: isCorr, timeTakenMs: timeMs, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(e => {});
+}
+
+// --- 計算システム ---
+let currentProblemString = "";
+function generateMathProblem() {
+    problemCount++;
+    let n1, n2, symbol, answer, pStr;
+    let levelToUse = currentPlayedLevel;
+    if (levelToUse === "8") levelToUse = String(Math.floor(Math.random() * 7) + 1);
+    
+    switch(levelToUse) {
+        case "1": 
+            if (Math.random() < 0.3) { answer = Math.floor(Math.random()*9)+1; pStr = `? ＋ ${10 - answer} ＝ 10`; } 
+            else { n1 = Math.floor(Math.random()*9)+1; n2 = Math.floor(Math.random()*9)+1; if(Math.random()>0.5){ pStr = `${n1} ＋ ${n2} ＝ ?`; answer = n1 + n2; } else { let max = Math.max(n1, n2); let min = Math.min(n1, n2); pStr = `${max} － ${min} ＝ ?`; answer = max - min; } }
+            break;
+        case "2": 
+            if(Math.random()>0.5){ do { n1 = Math.floor(Math.random()*90)+10; n2 = Math.floor(Math.random()*90)+10; } while(n1%10 + n2%10 < 10); pStr = `${n1} ＋ ${n2} ＝ ?`; answer = n1 + n2; } 
+            else { do { n1 = Math.floor(Math.random()*90)+10; n2 = Math.floor(Math.random()*90)+10; } while(Math.max(n1,n2)%10 >= Math.min(n1,n2)%10); let max = Math.max(n1, n2); let min = Math.min(n1, n2); pStr = `${max} － ${min} ＝ ?`; answer = max - min; } 
+            break;
+        case "3": n1 = Math.floor(Math.random()*9)+1; n2 = Math.floor(Math.random()*9)+1; pStr = `${n1} × ${n2} ＝ ?`; answer = n1 * n2; break;
+        case "4": n1 = Math.floor(Math.random()*9)+11; pStr = `${n1} × ${n1} ＝ ?`; answer = n1 * n1; break;
+        case "5": n1 = Math.floor(Math.random()*90)+10; n2 = Math.floor(Math.random()*90)+10; pStr = `${n1} × ${n2} ＝ ?`; answer = n1 * n2; break;
+        case "6": answer = Math.floor(Math.random()*90)+10; n2 = Math.floor(Math.random()*90)+10; n1 = answer * n2; pStr = `${n1} ÷ ${n2} ＝ ?`; break;
+        case "7": n2 = Math.floor(Math.random()*10)+1; pStr = `3.14 × ${n2} ＝ ?`; answer = Math.round(3.14 * n2 * 100) / 100; break;
+    }
+    currentAnswer = answer; currentProblemString = pStr;
+    
+    let problemBox = document.getElementById('problem-box');
+    document.getElementById('math-problem').innerText = pStr; 
+    problemBox.classList.remove('correct-flash', 'error-flash'); 
+    
+    currentInputStr = ""; document.getElementById('fake-input').innerText = "";
+    canOperate = false;
+    
+    document.getElementById('math-status').innerText = problemCount === 1 ? "答えを入力してENTER!" : "解読しろ！(SOLVE IT)";
+    document.getElementById('math-status').style.color = "#ff00ff";
+    problemStartTime = Date.now(); 
+    
+    showMathUI();
+}
+
+function submitAnswer() {
+    if (canOperate || isGameOver || currentInputStr === "") return; 
+    vibrate(30); 
+    
+    let numVal = parseFloat(currentInputStr); 
+    let timeTaken = Date.now() - problemStartTime;
+    let problemBox = document.getElementById('problem-box');
+    
+    if (Math.abs(numVal - currentAnswer) < 0.0001) {
+        saveLearningLog(currentProblemString, numVal, true, timeTaken); 
+        currentAnswer = NaN; playSound('correct'); canOperate = true; 
+        isNextHidden = false; drawNextPiece();
+        
+        problemBox.classList.remove('error-flash'); problemBox.classList.add('correct-flash');
+        showTetrisUI(); 
+        
+        if(gameInterval) clearInterval(gameInterval);
+        gameInterval = setInterval(drop, dropSpeed);
+        update();
+    } else {
+        saveLearningLog(currentProblemString, numVal, false, timeTaken); 
+        playSound('error'); vibrate([50, 50, 50]); 
+        currentInputStr = ""; document.getElementById('fake-input').innerText = ""; 
+        problemBox.classList.add('error-flash');
+        document.getElementById('math-status').innerText = "ERROR! ペナルティ発生！"; document.getElementById('math-status').style.color = "#ff0055";
+        
+        isNextHidden = true; drawNextPiece(); 
+        setTimeout(() => problemBox.classList.remove('error-flash'), 500);
+    }
+}
+
+// --- スワイプ＆タップ操作 ---
+let touchStartX = 0; let touchStartY = 0;
+canvas.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+}, {passive: false});
+
+canvas.addEventListener('touchmove', e => {
+    if (!canOperate || isGameOver) return;
+    let touchX = e.touches[0].clientX; let touchY = e.touches[0].clientY;
+    let dx = touchX - touchStartX; let dy = touchY - touchStartY;
+    
+    if (dx > 25) { moveRight(); touchStartX = touchX; touchStartY = touchY; vibrate(5);}
+    else if (dx < -25) { moveLeft(); touchStartX = touchX; touchStartY = touchY; vibrate(5);}
+    if (dy > 35) { dropOne(); touchStartX = touchX; touchStartY = touchY; vibrate(5);}
+}, {passive: false});
+
+canvas.addEventListener('touchend', e => {
+    if (!canOperate || isGameOver) return;
+    let touchEndX = e.changedTouches[0].clientX; let touchEndY = e.changedTouches[0].clientY;
+    let dx = touchEndX - touchStartX; let dy = touchEndY - touchStartY;
+    
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) { rotatePiece(); vibrate(10); }
+    else if (dy > 40 && Math.abs(dx) < 20) { hardDrop(); vibrate(20); } 
+});
+
+// --- 描画・エフェクト ---
+let particles = [];
+function createParticles(x, y, colorStr, isSuper = false) {
+    let count = isSuper ? 12 : 6; 
+    for (let i = 0; i < count; i++) particles.push({ x: x * BLOCK_SIZE + BLOCK_SIZE / 2, y: y * BLOCK_SIZE + BLOCK_SIZE / 2, vx: (Math.random() - 0.5) * (isSuper?25:15), vy: (Math.random() - 0.5) * (isSuper?25:15) - 5, life: 1.0, color: colorStr, size: Math.random() * (isSuper?6:4) + 2 });
+}
+function updateParticles() {
+    pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.8; p.life -= 0.04;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+        pCtx.globalAlpha = p.life; pCtx.fillStyle = p.color; pCtx.fillRect(p.x, p.y, p.size, p.size);
+    }
+    pCtx.globalAlpha = 1.0; requestAnimationFrame(updateParticles);
+}
+requestAnimationFrame(updateParticles); 
+
+function showPopupText(text) {
+    let el = document.createElement('div'); el.className = 'popup-text'; el.innerText = text;
+    document.getElementById('canvas-wrapper').appendChild(el);
+    setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 800);
+}
+
+function drawSquare(ctxToDraw, x, y, type, size = BLOCK_SIZE) {
+    ctxToDraw.fillStyle = COLORS[type]; ctxToDraw.fillRect(x * size, y * size, size, size);
+    ctxToDraw.strokeStyle = 'rgba(0,0,0,0.8)'; ctxToDraw.lineWidth = 2; ctxToDraw.strokeRect(x * size, y * size, size, size);
+    ctxToDraw.fillStyle = 'rgba(255,255,255,0.4)'; ctxToDraw.fillRect(x * size + 2, y * size + 2, size - 4, 3);
+    ctxToDraw.textAlign = 'center'; ctxToDraw.textBaseline = 'middle';
+    if (type === 9) { ctxToDraw.fillStyle = '#fff'; ctxToDraw.font = Math.floor(size * 0.7) + 'px Arial'; ctxToDraw.fillText('★', x * size + size / 2, y * size + size / 2 + 2); } 
+    else if (type === 10) { ctxToDraw.fillStyle = '#ff0055'; ctxToDraw.font = Math.floor(size * 0.8) + 'px Arial'; ctxToDraw.fillText('✖', x * size + size / 2, y * size + size / 2 + 2); } 
+    else if (type === 11) { ctxToDraw.fillStyle = '#000'; ctxToDraw.font = Math.floor(size * 0.4) + 'px Arial'; ctxToDraw.fillText('BOMB', x * size + size / 2, y * size + size / 2 + 2); }
+}
+
+function drawBoard() { ctx.clearRect(0, 0, canvas.width, canvas.height); for (let r = 0; r < ROWS; r++) { for (let c = 0; c < COLS; c++) { if (board[r][c]) drawSquare(ctx, c, r, board[r][c], BLOCK_SIZE); } } }
+function drawPiece() { if(!currentPiece) return; currentPiece.shape.forEach((row, y) => { row.forEach((value, x) => { if (value) drawSquare(ctx, currentPiece.x + x, currentPiece.y + y, currentPiece.type, BLOCK_SIZE); }); }); }
+function drawGhost() {
+    if (!currentPiece || !canOperate) return; let ghostY = currentPiece.y; while (!collideAt(currentPiece.x, ghostY + 1, currentPiece.shape)) ghostY++;
+    ctx.globalAlpha = 0.2; currentPiece.shape.forEach((row, y) => { row.forEach((value, x) => { if (value) drawSquare(ctx, currentPiece.x + x, ghostY + y, currentPiece.type, BLOCK_SIZE); }); }); ctx.globalAlpha = 1.0; 
+}
+function drawNextPiece() {
+    nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+    if (isNextHidden) { nextCtx.fillStyle = '#ff0055'; nextCtx.font = 'bold 30px Arial'; nextCtx.textAlign = 'center'; nextCtx.textBaseline = 'middle'; nextCtx.fillText('❓', nextCanvas.width/2, nextCanvas.height/2 + 3); return; }
+    if(!nextPiece) return; const offsetX = nextPiece.shape[0].length === 4 ? 0.5 : 1; const offsetY = nextPiece.shape.length === 1 ? 2 : 1.5;
+    nextPiece.shape.forEach((row, y) => { row.forEach((value, x) => { if (value) drawSquare(nextCtx, x + offsetX, y + offsetY, nextPiece.type, 20); }); });
+}
+
+function generateRandomPiece() { 
+    const baseShape = SHAPES[Math.floor(Math.random() * 7) + 1]; let type; const rand = Math.random();
+    if (rand < 1/30) type = 10; else if (rand < 1/30 + 1/40) type = 9; else if (rand < 1/30 + 1/40 + 1/50) type = 11; else type = Math.floor(Math.random() * 7) + 1; 
+    return { shape: baseShape, x: 3, y: 0, type: type }; 
+}
+
+function spawnPiece() {
+    if (!nextPiece) nextPiece = generateRandomPiece();
+    currentPiece = nextPiece; nextPiece = generateRandomPiece();
+    isNextHidden = false; drawNextPiece();
+    
+    const canvasEl = document.getElementById('gameCanvas'); canvasEl.classList.remove('gold-alert', 'black-alert', 'rainbow-alert');
+    if (currentPiece.type === 9) { canvasEl.classList.add('gold-alert'); setTimeout(() => canvasEl.classList.remove('gold-alert'), 800); } 
+    else if (currentPiece.type === 10) { canvasEl.classList.add('black-alert'); setTimeout(() => canvasEl.classList.remove('black-alert'), 800); } 
+    else if (currentPiece.type === 11) { canvasEl.classList.add('rainbow-alert'); setTimeout(() => canvasEl.classList.remove('rainbow-alert'), 1000); }
+
+    if (collideAt(currentPiece.x, currentPiece.y, currentPiece.shape)) { gameOver(); return; }
+    if(gameInterval) clearInterval(gameInterval); generateMathProblem(); update();
+}
+
+function collideAt(cx, cy, shape) {
+    for (let y = 0; y < shape.length; y++) { for (let x = 0; x < shape[y].length; x++) { if (shape[y][x]) { let newX = cx + x; let newY = cy + y; if (newX < 0 || newX >= COLS || newY >= ROWS || (newY >= 0 && board[newY][newX])) return true; } } }
+    return false;
+}
+
+function merge() { 
+    currentPiece.shape.forEach((row, y) => { row.forEach((value, x) => { if (value) board[currentPiece.y + y][currentPiece.x + x] = currentPiece.type; }); }); 
+    piecesPlaced++;
+    if (piecesPlaced % 15 === 0 && currentSpeedLevel < 15) {
+        currentSpeedLevel++; document.getElementById('speed').value = currentSpeedLevel; 
+        dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200)); playSound('levelup');
+    }
+    document.getElementById('speed-level-display').innerText = `Lv.${Math.floor(piecesPlaced/15)+1} (SPD: ${currentSpeedLevel})`;
+}
+
+async function processChains(comboCount = 0) {
+    let linesToClear = []; let hasGoldTrigger = false; let hasRainbowTrigger = false; let blackBlocksDestroyed = 0;
+
+    for (let r = 0; r < ROWS; r++) {
+        let isFull = true; let hasBlack = false; let hasGold = false; let hasRainbow = false;
+        for (let c = 0; c < COLS; c++) { if (!board[r][c]) isFull = false; if (board[r][c] === 10) hasBlack = true; if (board[r][c] === 9) hasGold = true; if (board[r][c] === 11) hasRainbow = true; }
+        if (isFull) { if (!(hasBlack && !hasGold && !hasRainbow)) { linesToClear.push(r); if (hasGold) hasGoldTrigger = true; if (hasRainbow) hasRainbowTrigger = true; } }
+    }
+    
+    let finalLinesToClear = new Set(linesToClear);
+    let isMassiveClear = linesToClear.length >= 3;
+    
+    if (hasRainbowTrigger) { for(let r=0; r<ROWS; r++) finalLinesToClear.add(r); } 
+    else if (hasGoldTrigger) { linesToClear.forEach(r => { if (board[r].includes(9)) { for (let i = Math.max(0, r - 2); i <= Math.min(ROWS - 1, r + 2); i++) finalLinesToClear.add(i); } }); }
+
+    let clearedCount = finalLinesToClear.size; let willDestroyAllBlacks = isMassiveClear; 
+    
+    if (clearedCount > 0 || willDestroyAllBlacks) {
+        finalLinesToClear.forEach(r => { for (let c = 0; c < COLS; c++) { if (board[r][c] !== 0) { createParticles(c, r, COLORS[board[r][c]]||'#fff', hasGoldTrigger||hasRainbowTrigger); if (board[r][c]===10) blackBlocksDestroyed++; } } });
+        if (willDestroyAllBlacks) { for (let r=0; r<ROWS; r++) { for (let c=0; c<COLS; c++) { if (board[r][c]===10 && !finalLinesToClear.has(r)) { createParticles(c, r, COLORS[10], true); board[r][c]=0; blackBlocksDestroyed++; } } } }
+        finalLinesToClear.forEach(r => { for(let c=0; c<COLS; c++) board[r][c] = 0; }); drawBoard(); 
+
+        comboCount++; let comboMultiplier = comboCount > 1 ? comboCount : 1;
+        let gainedScore = clearedCount * 100 * currentSpeedLevel * comboMultiplier;
+        
+        if (hasRainbowTrigger) { gainedScore += 10000; playBreakSound('rainbow', clearedCount); triggerShake(); vibrate(100); showPopupText("ALL CLEAR!!"); } 
+        else if (hasGoldTrigger) { gainedScore *= 2; playBreakSound('gold', clearedCount); triggerShake(); vibrate(50); showPopupText("💥BOMB!"); } 
+        else if (willDestroyAllBlacks) { playBreakSound('black', clearedCount); triggerShake(); vibrate(50); showPopupText("CRITICAL!!"); } 
+        else { playBreakSound('normal', clearedCount); vibrate(20);}
+        if (blackBlocksDestroyed > 0) gainedScore += (blackBlocksDestroyed * 1000); 
+
+        score += gainedScore; document.getElementById('score').innerText = score;
+        document.getElementById('combo-display').innerText = (comboCount > 1 ? ` ${comboCount} CHAIN! ` : "") + (blackBlocksDestroyed > 0 ? ` BLACK x${blackBlocksDestroyed} ` : "");
+        
+        canvas.style.backgroundColor = hasRainbowTrigger ? "#ff00ff" : (hasGoldTrigger ? "#ffeb3b" : (willDestroyAllBlacks ? "#ff0055" : "#fff")); 
+        setTimeout(() => canvas.style.backgroundColor = "#050510", 150);
+
+        await new Promise(resolve => setTimeout(resolve, 300)); applyGravity(); drawBoard();
+        await new Promise(resolve => setTimeout(resolve, 200)); await processChains(comboCount);
+    } else { if(comboCount === 0) document.getElementById('combo-display').innerText = ""; spawnPiece(); }
+}
+
+function applyGravity() {
+    for (let c = 0; c < COLS; c++) { let emptyRow = ROWS - 1; for (let r = ROWS - 1; r >= 0; r--) { if (board[r][c] !== 0) { if (r !== emptyRow) { board[emptyRow][c] = board[r][c]; board[r][c] = 0; } emptyRow--; } } }
+}
+function triggerShake() { let wrapper = document.getElementById('canvas-wrapper'); wrapper.classList.remove('shake-animation'); void wrapper.offsetWidth; wrapper.classList.add('shake-animation'); }
+function drop() { if (!canOperate || isGameOver) return; if (!collideAt(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) { currentPiece.y++; update(); } else { canOperate = false; merge(); processChains(); } }
+function update() { drawBoard(); drawGhost(); drawPiece(); }
+
+function moveLeft() { if (canOperate && !isGameOver && !collideAt(currentPiece.x - 1, currentPiece.y, currentPiece.shape)) { currentPiece.x--; update(); vibrate(5);} }
+function moveRight() { if (canOperate && !isGameOver && !collideAt(currentPiece.x + 1, currentPiece.y, currentPiece.shape)) { currentPiece.x++; update(); vibrate(5);} }
+function dropOne() { if (canOperate && !isGameOver) { drop(); vibrate(5);} }
+function rotatePiece() { if (!canOperate || isGameOver) return; const newShape = currentPiece.shape[0].map((_, i) => currentPiece.shape.map(row => row[i]).reverse()); if (!collideAt(currentPiece.x, currentPiece.y, newShape)) { currentPiece.shape = newShape; update(); vibrate(10);} }
+function hardDrop() { if (!canOperate || isGameOver) return; while (!collideAt(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) { currentPiece.y++; } canOperate = false; merge(); processChains(); vibrate(20);}
+
+// ==========================================
+// 🚀 確実なゲーム起動システム
+// ==========================================
+document.getElementById('start-btn').addEventListener('click', () => { 
+    initAudio(); // 音声をアククティブ化
+    document.getElementById('settings-modal').classList.add('hidden'); // 設定を隠す
+    startGame(); // 💡確実にゲームループを呼ぶ
+});
+
+function startGame() {
+    board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    score = 0; combo = 0; isGameOver = false; nextPiece = null; problemCount = 0; piecesPlaced = 0; currentInputStr = "";
+    
+    currentPlayedLevel = document.getElementById('level').value;
+    currentSpeedLevel = parseInt(document.getElementById('speed').value);
+    dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200)); 
+
+    document.getElementById('score').innerText = score;
+    document.getElementById('combo-display').innerText = "";
+    document.getElementById('speed-level-display').innerText = `Lv.${Math.floor(piecesPlaced/15)+1} (SPD: ${currentSpeedLevel})`;
+    
+    document.getElementById('play-area').classList.remove('hidden');
+    document.getElementById('game-over-modal').classList.add('hidden');
+
+    if(gameInterval) clearInterval(gameInterval); 
+    spawnPiece(); 
+}
+
+function gameOver() {
+    isGameOver = true; if(gameInterval) clearInterval(gameInterval);
+    document.getElementById('math-status').innerText = "SYSTEM DOWN"; document.getElementById('math-status').style.color = "#ff0055";
+    document.getElementById('answer-btn').disabled = true;
+    document.getElementById('game-over-modal').classList.remove('hidden');
+    finalScoreToSave = score; checkRanking(finalScoreToSave);
+}
+
+// ==========================================
+// 🌍 ランキング
+// ==========================================
+async function loadRanking(highlightId = null) {
+    const displayLevel = document.getElementById('level').value;
+    const boardEl = document.getElementById('ranking-board');
+    if (!db) { boardEl.innerHTML = '<span style="color:#ff0055;">※Firebase未設定</span>'; return []; }
+    try {
+        const querySnapshot = await db.collection(`ranks_level_${displayLevel}`).orderBy("score", "desc").limit(10).get();
+        let html = ''; querySnapshot.forEach((doc, i) => { const r = doc.data(); const hl = doc.id === highlightId ? 'highlight' : ''; html += `<div class="rank-item ${hl}"><span>${i+1}位: ${r.name}</span><span>${r.score} 点</span></div>`; });
+        boardEl.innerHTML = html || 'まだ記録がありません';
+    } catch (error) { boardEl.innerHTML = 'エラー発生'; }
+}
+async function checkRanking(finalScore) {
+    if (finalScore === 0 || !db) return;
+    const querySnapshot = await db.collection(`ranks_level_${currentPlayedLevel}`).orderBy("score", "desc").limit(10).get();
+    let ranks = []; querySnapshot.forEach(doc => ranks.push(doc.data()));
+    if (ranks.length < 10 || finalScore > ranks[ranks.length - 1].score) {
+        document.getElementById('dq-modal').classList.remove('hidden'); document.getElementById('dq-name').value = '';
+    }
+}
+function saveNameRecord() {
+    let name = document.getElementById('dq-name').value || 'ゆうしゃ';
+    if(db) {
+        db.collection(`ranks_level_${currentPlayedLevel}`).add({ name: name, score: finalScoreToSave, timestamp: new Date() }).then(docRef => {
+            document.getElementById('dq-modal').classList.add('hidden'); document.getElementById('level').value = currentPlayedLevel; openRanking(); loadRanking(docRef.id); 
+        });
+    }
+}
+</script>
+</body>
+</html>
