@@ -8,69 +8,101 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
     <style>
-        /* 📱 基本設定 */
+        /* 📱 共通リセット＆ベース設定 */
         html, body { height: 100dvh; margin: 0; padding: 0; overflow: hidden; touch-action: none; background-color: #090910; color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; -webkit-user-select: none; }
         
-        /* 🧩 全体レイアウト (モバイルファースト) */
-        #game-wrapper { display: flex; flex-direction: column; height: 100dvh; width: 100vw; box-sizing: border-box; }
+        /* 💡 フレックスボックスによる自動配置システム */
+        #app-wrapper { display: flex; flex-direction: column; height: 100dvh; width: 100vw; box-sizing: border-box; }
         
-        /* モバイル用ヘッダー */
-        #mobile-header { flex: 0 0 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; background: #12121f; border-bottom: 2px solid #00ffff; box-shadow: 0 4px 10px rgba(0,255,255,0.2); z-index: 10;}
-        .menu-btn { background: #333; color: #00ffff; border: 1px solid #00ffff; border-radius: 4px; padding: 5px 15px; font-weight: bold; cursor: pointer; }
+        /* --- モバイル用ヘッダー --- */
+        #mobile-header { flex: 0 0 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; background: #12121f; border-bottom: 2px solid #00ffff; z-index: 10; box-shadow: 0 4px 10px rgba(0,255,255,0.2);}
+        #mobile-header h1 { color: #00ffff; font-size: 18px; margin: 0; text-shadow: 0 0 5px #00ffff; }
+        .score-box { font-size: 20px; font-weight: bold; color: #ff00ff; text-shadow: 0 0 5px #ff00ff; margin: 0;}
+        .menu-btn { background: #333; color: #00ffff; border: 1px solid #00ffff; border-radius: 4px; padding: 5px 10px; font-weight: bold; cursor: pointer; }
+
+        /* --- 左パネル (モバイル時は設定モーダル、PC時は左カラム) --- */
+        #left-panel { order: 3; display: none; flex-direction: column; padding: 15px; background: #1c1c2d; border-radius: 8px; border: 1px solid #00ffff; box-sizing: border-box; overflow-y: auto;}
         
-        /* サイドパネル (スマホ時はモーダル、PC時は左カラム) */
-        #side-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-        #side-panel.show-modal { display: flex; }
-        .panel-content { background: #12121f; border: 2px solid #00ffff; border-radius: 12px; padding: 20px; width: 100%; max-width: 350px; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
-        .pc-title { display: none; color: #00ffff; font-size: 24px; text-align: center; margin-top: 0; text-shadow: 0 0 10px #00ffff;}
-        
-        .setting-group { margin-bottom: 15px; }
-        .setting-group label { font-size: 12px; color: #00ffff; display: block; margin-bottom: 5px; font-weight: bold;}
-        select { width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #555; border-radius: 6px; font-size: 14px; font-weight: bold;}
-        
-        .action-btn { width: 100%; padding: 15px; background: #ff00ff; color: #fff; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 0 #cc00cc; cursor: pointer; transition: 0.1s;}
-        .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cc00cc; background: #fff; color: #ff00ff; }
-        .close-btn { background: #555; box-shadow: 0 4px 0 #333; margin-top: 10px;}
-        
-        /* 🎮 中央ゲーム画面 */
-        #center-panel { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; padding: 10px; min-height: 0; }
-        #canvas-container { height: 100%; aspect-ratio: 1 / 2; position: relative; max-width: 100%; }
+        /* --- 中央パネル (パズル画面) --- */
+        #center-panel { order: 1; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; min-height: 0; }
+        #canvas-wrapper { position: relative; height: 100%; aspect-ratio: 1/2; max-width: 100%; }
         #gameCanvas, #particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
         #gameCanvas { background-color: #050510; border: 2px solid #00ffff; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); box-sizing: border-box; }
         #particleCanvas { z-index: 5; pointer-events: none; }
         
-        #next-box { position: absolute; top: 5px; right: 5px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid #00ffff; border-radius: 6px; z-index: 6; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 10px #000;}
+        #next-box { position: absolute; top: 5px; right: 5px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid #00ffff; border-radius: 6px; z-index: 6; display: flex; justify-content: center; align-items: center;}
         #nextCanvas { width: 100%; height: 100%; }
 
-        /* 🧮 アクションパネル (スマホ時は下部、PC時は右カラム) */
-        #action-panel { flex: 0 0 230px; background: #12121f; border-top: 2px solid #ff00ff; padding: 10px; display: flex; flex-direction: column; }
-        .pc-score-box { display: none; font-size: 24px; font-weight: bold; color: #ff00ff; margin-bottom: 10px; text-shadow: 0 0 5px #ff00ff;}
-        #combo-display { color: #ff00ff; font-weight: bold; font-size: 16px; text-shadow: 0 0 5px #ff00ff; text-align: center; height: 20px;}
+        /* --- 右パネル (モバイル時は下部操作エリア、PC時は右カラム) --- */
+        #right-panel { order: 2; flex: 0 0 230px; display: flex; flex-direction: column; background: #12121f; border-top: 2px solid #ff00ff; padding: 10px; box-sizing: border-box; box-shadow: 0 -4px 10px rgba(255,0,255,0.2);}
 
-        /* 計算モードUI */
+        /* 🧮 計算UI */
         #math-ui { display: flex; flex-direction: column; flex: 1; justify-content: space-between; }
-        .math-row { display: flex; align-items: center; justify-content: space-between; background: #000; border: 2px dashed #ffff00; border-radius: 8px; padding: 5px 15px; margin-bottom: 5px;}
-        #math-problem { font-size: 24px; font-weight: bold; color: #ffff00; transition: 0.2s;}
-        #math-input-display { font-size: 24px; font-weight: bold; color: #fff; background: #222; padding: 2px 15px; border-radius: 6px; min-width: 60px; text-align: right; border: 1px solid #555; min-height: 30px; line-height: 30px;}
+        #math-status { font-size: 14px; font-weight: bold; color: #00ffff; text-align: center; margin-bottom: 5px;}
         
+        .math-row { display: flex; align-items: center; justify-content: space-between; background: #000; border: 2px dashed #ffff00; border-radius: 8px; padding: 5px 15px; margin-bottom: 5px; transition: 0.1s;}
+        #math-problem { font-size: 24px; font-weight: bold; color: #ffff00; }
+        #math-input-display { font-size: 24px; font-weight: bold; color: #fff; background: #222; padding: 2px 10px; border-radius: 6px; min-width: 60px; text-align: right; border: 1px solid #555; height: 35px; line-height: 35px;}
+        
+        /* テンキー */
         #numpad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: 1; }
-        .num-btn { background: #333; color: #fff; border: 2px solid #555; border-radius: 8px; font-size: 20px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 0 #111; cursor: pointer;}
+        .num-btn { background: #333; color: #fff; border: 2px solid #555; border-radius: 8px; font-size: 20px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 0 #111; cursor: pointer; transition: 0.1s;}
         .num-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #111; background: #666; }
         .num-btn.del { background: #ff0055; border-color: #cc0044; box-shadow: 0 4px 0 #880022;}
         .num-btn.enter { background: #00ccff; color: #000; border-color: #0099cc; box-shadow: 0 4px 0 #006688; grid-column: span 2;}
         .num-btn.zero { grid-column: span 2; }
 
-        /* テトリスモードUI */
+        /* 🎮 テトリスUI */
         #tetris-ui { display: none; flex-direction: column; flex: 1; justify-content: space-between; }
+        #t-status { color: #39ff14; font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 10px;}
         #t-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 1;}
-        .t-btn { background: #222; color: #00ffff; border: 2px solid #00ffff; border-radius: 12px; font-size: 24px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 0 #008888; cursor: pointer;}
+        .t-btn { background: #222; color: #00ffff; border: 2px solid #00ffff; border-radius: 12px; font-size: 24px; font-weight: bold; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 0 #008888;}
         .t-btn:active { transform: translateY(6px); box-shadow: 0 0 0 #008888; background: #00ffff; color: #000;}
-        .btn-drop { grid-column: span 4; background: linear-gradient(180deg, #ff00ff, #cc00cc); color: white; border: none; box-shadow: 0 6px 0 #880088;}
+        .btn-drop { grid-column: span 4; background: linear-gradient(180deg, #ff00ff, #cc00cc); color: white; border: none; box-shadow: 0 6px 0 #880088; font-size: 20px;}
+        .btn-drop:active { box-shadow: 0 0 0 #880088; background: #fff; color: #ff00ff;}
 
-        /* エフェクト・その他 */
+        /* ⚙️ 設定フォーム部品 */
+        .setting-group { margin-bottom: 15px; text-align: left; }
+        .setting-group label { font-size: 12px; color: #00ffff; display: block; margin-bottom: 5px; font-weight: bold;}
+        select { width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #555; border-radius: 6px; font-size: 14px; font-weight: bold; box-sizing: border-box;}
+        
+        .action-btn { width: 100%; padding: 15px; background: #ff00ff; color: #fff; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 10px; box-shadow: 0 4px 0 #cc00cc; cursor: pointer; transition: 0.1s;}
+        .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cc00cc; background: #fff; color: #ff00ff; }
+        
+        #combo-display { color: #ff00ff; font-weight: bold; font-size: 14px; text-align: center; height: 20px; margin-bottom: 5px;}
+
+        /* 💻 パソコン用レイアウト切替 (画面幅800px以上) */
+        @media (min-width: 800px) {
+            #app-wrapper { flex-direction: row; justify-content: center; align-items: stretch; padding: 20px; max-width: 1000px; gap: 20px; }
+            #mobile-header { display: none; }
+            
+            /* 左に設定パネル */
+            #left-panel { order: 1; display: flex !important; position: static; width: 300px; flex: 0 0 300px; background: #12121f; border-radius: 8px; border: 2px solid #00ffff; box-shadow: 0 0 20px rgba(0,255,255,0.1); }
+            /* 中央にゲーム画面 */
+            #center-panel { order: 2; height: 85vh; padding: 0; }
+            /* 右に操作・計算パネル */
+            #right-panel { order: 3; flex: 0 0 300px; height: 85vh; border: 2px solid #ff00ff; border-radius: 12px; border-top: 2px solid #ff00ff;}
+            
+            /* PCではテンキーとボタンを隠す（キーボード操作前提） */
+            #numpad { display: none !important; }
+            #t-controls { display: none !important; }
+            
+            .pc-title { color: #00ffff; font-size: 24px; text-align: center; margin: 0 0 20px 0; text-shadow: 0 0 10px #00ffff;}
+            .close-btn { display: none; } /* PCでは閉じるボタン不要 */
+        }
+        
+        .pc-title { display: none; }
+        @media (min-width: 800px) { .pc-title { display: block; } }
+
+        /* 📱 スマホ用モーダル化クラス */
+        .mobile-modal { position: fixed !important; top: 0; left: 0; width: 100vw !important; height: 100vh !important; background: rgba(0,0,0,0.95) !important; z-index: 100; display: flex; justify-content: center; align-items: center; border: none !important; }
+
+        /* エフェクト類 */
         .hidden { display: none !important; }
-        .correct-flash { background-color: #39ff14 !important; color: #000 !important; border-color: #fff !important; box-shadow: 0 0 30px #39ff14;}
-        .error-flash { background-color: #ff0000 !important; color: #fff !important; border-color: #fff !important; box-shadow: 0 0 30px #ff0000;}
+        
+        .correct-flash { background-color: #39ff14 !important; color: #000 !important; box-shadow: 0 0 30px #39ff14;}
+        .error-shake { animation: errShake 0.4s cubic-bezier(.36,.07,.19,.97) both; background-color: #ff0000 !important; border-color: #fff !important; box-shadow: 0 0 30px #ff0000 !important; }
+        @keyframes errShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-15px); } 40%, 80% { transform: translateX(15px); } }
         
         .gold-alert { border-color: #FFD700 !important; box-shadow: 0 0 40px #FFD700 !important; }
         .black-alert { border-color: #ff0000 !important; box-shadow: 0 0 40px #ff0000 !important; }
@@ -79,103 +111,84 @@
         .shake-animation { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 0%, 100% { transform: translate3d(0,0,0); } 20%, 60% { transform: translate3d(-10px,8px,0); } 40%, 80% { transform: translate3d(10px,-8px,0); } }
         
-        .popup-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #ff00ff; font-size: 35px; font-weight: bold; text-shadow: 0 0 20px #fff; z-index: 20; pointer-events: none; animation: popUp 1s forwards; white-space: nowrap;}
+        .popup-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #ff00ff; font-size: 40px; font-weight: bold; text-shadow: 0 0 20px #fff; z-index: 20; pointer-events: none; animation: popUp 1s forwards; white-space: nowrap;}
         @keyframes popUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.5); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1.1); } }
 
         #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
-
-        /* 💻 パソコン用レイアウト (自動切り替え) */
-        @media (min-width: 800px) {
-            #game-wrapper { flex-direction: row; justify-content: center; align-items: center; gap: 20px; padding: 20px; max-width: 1000px; margin: 0 auto;}
-            #mobile-header { display: none; }
-            
-            #side-panel { display: flex; position: static; background: transparent; width: 300px; height: auto; padding: 0; }
-            .panel-content { box-shadow: 0 4px 15px rgba(0,255,255,0.1); }
-            .pc-title { display: block; }
-            .mobile-only { display: none; }
-            
-            #center-panel { flex: 0 0 auto; height: 90vh; }
-            #canvas-container { height: 100%; }
-            
-            #action-panel { flex: 0 0 300px; height: 90vh; border: 2px solid #ff00ff; border-radius: 12px; }
-            .pc-score-box { display: block; }
-            
-            /* PCではキーボードが使えるのでテンキーを少し小さめに */
-            .num-btn { font-size: 16px; padding: 5px; }
-        }
+        
+        /* ランキング */
+        #ranking-board { max-height: 200px; overflow-y: auto; text-align: left; font-size: 14px; margin-top: 20px; border-top: 1px solid #333; padding-top: 10px;}
+        .rank-item { padding: 5px; border-bottom: 1px solid #333; display: flex; justify-content: space-between;}
     </style>
 </head>
 <body>
 
-<div id="game-wrapper">
+<div id="app-wrapper">
     <div id="mobile-header">
-        <h1 style="margin:0; font-size:18px; color:#00ffff;">MATH TETRIS</h1>
-        <div style="font-size:20px; font-weight:bold; color:#ff00ff;">
-            SCORE: <span class="score-value">0</span>
-        </div>
-        <button class="menu-btn" onclick="toggleSettings()">⚙️ MENU</button>
+        <h1>MATH TETRIS</h1>
+        <div class="score-box"><span id="score-mobile">0</span></div>
+        <button class="menu-btn" onclick="openMobileSettings()">⚙️ MENU</button>
     </div>
 
-    <div id="side-panel">
-        <div class="panel-content">
-            <h2 class="pc-title">MATH TETRIS</h2>
-            <div class="setting-group">
-                <label>計算レベル</label>
-                <select id="level">
-                    <option value="1">Lv1: 1桁 足し引き (10補数)</option>
-                    <option value="2">Lv2: 2桁 足し引き</option>
-                    <option value="3">Lv3: 1桁 掛け算</option>
-                    <option value="4">Lv4: 平方計算</option>
-                    <option value="5">Lv5: 2桁 掛け算</option>
-                    <option value="6">Lv6: 2桁 割り算</option>
-                    <option value="7">Lv7: 円周率</option>
-                    <option value="8">Lv8: カオス (全ランダム)</option>
-                </select>
-            </div>
-            <div class="setting-group">
-                <label>初期スピード</label>
-                <select id="speed">
-                    <option value="1">1 (ゆっくり)</option>
-                    <option value="3">3</option>
-                    <option value="5" selected>5 (標準)</option>
-                    <option value="8">8 (速い)</option>
-                    <option value="10">10 (激ムズ)</option>
-                </select>
-            </div>
-            
-            <button class="action-btn" id="start-btn">▶️ GAME START</button>
-            <button class="action-btn close-btn mobile-only" onclick="toggleSettings()">閉じる</button>
+    <div id="left-panel">
+        <h2 class="pc-title">MATH TETRIS</h2>
+        <div class="setting-group">
+            <label>計算レベル</label>
+            <select id="level">
+                <option value="1">Lv1: 1桁 足し引き (10補数)</option>
+                <option value="2">Lv2: 2桁 足し引き</option>
+                <option value="3">Lv3: 1桁 掛け算</option>
+                <option value="4">Lv4: 平方計算</option>
+                <option value="5">Lv5: 2桁 掛け算</option>
+                <option value="6">Lv6: 2桁 割り算</option>
+                <option value="7">Lv7: 円周率</option>
+                <option value="8" style="color:#ff00ff;">Lv8: カオス (全ランダム)</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <label>初期スピード</label>
+            <select id="speed">
+                <option value="1">1 (ゆっくり)</option>
+                <option value="3">3</option>
+                <option value="5" selected>5 (標準)</option>
+                <option value="8">8 (速い)</option>
+                <option value="10">10 (激ムズ)</option>
+            </select>
+        </div>
+        <button class="action-btn" id="start-btn">▶️ GAME START</button>
+        <button class="action-btn close-btn" id="close-settings-btn" onclick="closeMobileSettings()" style="display:none;">閉じる</button>
 
-            <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 10px;">
-                <h3 style="color:#00ffff; margin:0 0 10px 0; font-size:14px; text-align:center;">🏆 TOP 10</h3>
-                <div id="ranking-board" style="font-size:12px; max-height:150px; overflow-y:auto; color:#ccc;">LOADING...</div>
-            </div>
+        <div id="ranking-board">
+            <h3 style="color:#00ffff; margin:0 0 5px 0; font-size:14px;">🏆 TOP 10</h3>
+            <div id="ranking-list" style="color:#ccc;">LOADING...</div>
         </div>
     </div>
 
     <div id="center-panel">
-        <div id="canvas-container">
+        <div id="canvas-wrapper">
             <canvas id="gameCanvas" width="300" height="600"></canvas>
             <canvas id="particleCanvas" width="300" height="600"></canvas>
             <div id="next-box"><canvas id="nextCanvas" width="60" height="60"></canvas></div>
             
             <div id="game-over-overlay" class="hidden">
-                <h2 style="color:#ff0055; font-size:32px; margin:0; text-shadow:0 0 20px #ff0055;">SYSTEM DOWN</h2>
+                <h2 style="color:#ff0055; font-size:36px; margin:0; text-shadow:0 0 20px #ff0055;">SYSTEM DOWN</h2>
                 <p style="color:#fff; font-weight:bold;">💀 限界突破 💀</p>
-                <button class="action-btn" style="width:80%;" onclick="toggleSettings()">REBOOT (設定へ)</button>
+                <button class="action-btn" style="width:80%;" onclick="openMobileSettings()">🔄 REBOOT (設定へ)</button>
             </div>
         </div>
     </div>
 
-    <div id="action-panel">
-        <div class="pc-score-box">SCORE: <span class="score-value">0</span></div>
+    <div id="right-panel">
+        <div class="score-box" style="display:none; text-align:center; font-size:24px; margin-bottom:10px;" id="score-pc">SCORE: <span id="score-pc-val">0</span></div>
         <div id="combo-display"></div>
 
         <div id="math-ui">
+            <div id="math-status">設定を決めて START!</div>
             <div class="math-row" id="problem-box">
-                <div id="math-problem">PRESS START</div>
+                <div id="math-problem">STANDBY</div>
                 <div id="math-input-display">_</div>
             </div>
+            
             <div id="numpad">
                 <div class="num-btn" onclick="inputPad('7')">7</div>
                 <div class="num-btn" onclick="inputPad('8')">8</div>
@@ -195,6 +208,7 @@
         </div>
 
         <div id="tetris-ui">
+            <div id="t-status">ACCESS GRANTED! 操作可能</div>
             <div id="t-controls">
                 <div class="t-btn" onclick="moveLeft()">◀</div>
                 <div class="t-btn" onclick="dropOne()">▼</div>
@@ -204,20 +218,20 @@
             </div>
         </div>
     </div>
+</div>
 
-    <div id="dq-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:flex; justify-content:center; align-items:center;">
-        <div style="background:#000; border:2px solid #00ffff; border-radius:12px; padding:20px; width:90%; max-width:350px; text-align:center;">
-            <h2 style="color:#00ffff; margin-top:0;">NEW RECORD!</h2>
-            <p style="font-size:14px;">トップ10にランクイン！<br>名前を記録してください。</p>
-            <input type="text" id="dq-name" maxlength="10" placeholder="NAME (10文字)" autocomplete="off" style="width:100%; padding:15px; font-size:20px; text-align:center; background:#111; color:#00ffff; border:2px solid #00ffff; border-radius:8px; margin-bottom:15px; box-sizing:border-box;">
-            <button class="action-btn" onclick="saveNameRecord()">SAVE RECORD</button>
-        </div>
+<div id="dq-modal" class="hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:200; display:flex; justify-content:center; align-items:center;">
+    <div style="background:#000; border:2px solid #00ffff; border-radius:12px; padding:20px; width:90%; max-width:350px; text-align:center;">
+        <h2 style="color:#00ffff; margin-top:0;">NEW RECORD!</h2>
+        <p style="font-size:14px; color:#fff;">トップ10にランクイン！<br>名前を記録してください。</p>
+        <input type="text" id="dq-name" maxlength="10" placeholder="NAME (10文字)" autocomplete="off" style="width:100%; padding:15px; font-size:20px; text-align:center; background:#111; color:#00ffff; border:2px solid #00ffff; border-radius:8px; margin-bottom:15px; box-sizing:border-box;">
+        <button class="action-btn" onclick="saveNameRecord()">SAVE RECORD</button>
     </div>
 </div>
 
 <script>
 // ==========================================
-// 🔴 iPhone誤操作防止 (ズーム＆スクロール禁止)
+// 🔴 iPhone誤操作防止
 // ==========================================
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 let lastTouchEnd = 0;
@@ -268,7 +282,7 @@ let problemCount = 0; let piecesPlaced = 0;
 let currentPlayedLevel = "1"; let problemStartTime = 0; 
 let isNextHidden = false; let finalScoreToSave = 0; 
 
-// 💡【最重要】入力文字を保持する唯一の変数
+// 💡 入力の一元管理
 let currentInputStr = "";
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -276,13 +290,42 @@ const SHAPES = [ [], [[1,1,1,1]], [[2,2],[2,2]], [[0,3,3],[3,3,0]], [[4,4,0],[0,
 const COLORS = [null, '#FF0055', '#00FFFF', '#39FF14', '#FF5F1F', '#FFFF00', '#0044FF', '#FF00FF', null, '#FFD700', '#444444', '#FFFFFF'];
 
 // --- UI切替 ---
-function toggleSettings() {
-    const panel = document.getElementById('side-panel');
-    panel.classList.contains('show-modal') ? panel.classList.remove('show-modal') : panel.classList.add('show-modal');
+function isMobile() { return window.innerWidth < 800; }
+function openMobileSettings() { 
+    if(isMobile()) {
+        const panel = document.getElementById('left-panel');
+        panel.classList.add('mobile-modal');
+        panel.style.display = 'flex';
+        document.getElementById('close-settings-btn').style.display = 'block';
+    }
 }
+function closeMobileSettings() { 
+    if(isMobile()) {
+        const panel = document.getElementById('left-panel');
+        panel.classList.remove('mobile-modal');
+        panel.style.display = 'none';
+    }
+}
+
+// 画面サイズ変更時（PCとスマホの切り替え）の処理
+window.addEventListener('resize', () => {
+    if(!isMobile()) {
+        document.getElementById('left-panel').style.display = 'flex';
+        document.getElementById('left-panel').classList.remove('mobile-modal');
+        document.getElementById('score-pc').style.display = 'block';
+    } else {
+        document.getElementById('left-panel').style.display = 'none';
+        document.getElementById('score-pc').style.display = 'none';
+    }
+});
+
 function showMathUI() { document.getElementById('math-ui').style.display = 'flex'; document.getElementById('tetris-ui').style.display = 'none'; }
 function showTetrisUI() { document.getElementById('math-ui').style.display = 'none'; document.getElementById('tetris-ui').style.display = 'flex'; }
-function updateScoreDisplay() { document.querySelectorAll('.score-value').forEach(el => el.innerText = score); }
+
+function updateScoreDisplay() { 
+    document.getElementById('score-mobile').innerText = score;
+    document.getElementById('score-pc-val').innerText = score;
+}
 function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} }
 
 // --- オーディオ (大爆発連鎖サウンド搭載) ---
@@ -327,8 +370,8 @@ function playExplosion(comboCount) {
 function playHeavyMissEffect() {
     vibrate([100, 50, 100]); // スパルタ振動
     const probBox = document.getElementById('problem-box');
-    probBox.classList.add('error-flash');
-    setTimeout(() => probBox.classList.remove('error-flash'), 500);
+    probBox.classList.add('error-shake');
+    setTimeout(() => probBox.classList.remove('error-shake'), 400);
 
     // 画面全体を赤くフラッシュ
     const originalBg = document.body.style.backgroundColor;
@@ -339,11 +382,13 @@ function playHeavyMissEffect() {
     try {
         if (!audioCtx || audioCtx.state === 'suspended') return;
         const time = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, time); osc.frequency.linearRampToValueAtTime(50, time + 0.5);
+        const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc1.type = 'sawtooth'; osc1.frequency.setValueAtTime(100, time);
+        osc2.type = 'square'; osc2.frequency.setValueAtTime(106, time); // 不協和音
         gain.gain.setValueAtTime(0.8, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(time); osc.stop(time + 0.5);
+        osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
+        osc1.start(time); osc2.start(time); osc1.stop(time + 0.5); osc2.stop(time + 0.5);
     } catch(e){}
     
     showPopupText("❌ MISS!!");
@@ -368,7 +413,6 @@ function playSound(type) {
 
 // --- 入力処理 (キーボード＆テンキー共通) ---
 function updateInputDisplay() {
-    // 入力文字にカーソル(_)を付けて表示
     document.getElementById('math-input-display').innerText = currentInputStr + "_";
 }
 
@@ -384,11 +428,10 @@ function inputPad(val) {
     updateInputDisplay();
 }
 
-// キーボード（PC向け）対応
+// PC用物理キーボード対応
 document.addEventListener('keydown', (e) => {
     if (document.activeElement.id === 'dq-name') return; 
-    
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault(); // スクロール防止
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault(); 
     
     if (!isGameOver) {
         if (!canOperate) {
@@ -408,6 +451,16 @@ document.addEventListener('keydown', (e) => {
     }
 }, { passive: false });
 
+document.getElementById('level').addEventListener('change', (e) => { currentPlayedLevel = e.target.value; if (!canOperate && !isGameOver && problemCount > 0) generateMathProblem(); loadRanking(); });
+document.getElementById('speed').addEventListener('change', (e) => {
+    currentSpeedLevel = parseInt(e.target.value); dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200));
+    if (canOperate && !isGameOver && gameInterval) { clearInterval(gameInterval); gameInterval = setInterval(drop, dropSpeed); }
+});
+
+function saveLearningLog(problemStr, uAns, isCorr, timeMs) {
+    if (!db) return;
+    db.collection('learning_logs').add({ userId: userId, level: currentPlayedLevel, problem: problemStr, userAnswer: uAns, isCorrect: isCorr, timeTakenMs: timeMs, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(e => {});
+}
 
 // --- 計算システム ---
 let currentProblemString = "";
@@ -434,16 +487,18 @@ function generateMathProblem() {
     }
     currentAnswer = answer; currentProblemString = pStr;
     
-    // UIリセット
     document.getElementById('math-problem').innerText = pStr; 
-    document.getElementById('problem-box').classList.remove('correct-flash', 'error-flash'); 
+    document.getElementById('problem-box').classList.remove('correct-flash', 'error-shake'); 
     
     currentInputStr = ""; 
     updateInputDisplay();
     canOperate = false;
     
-    showMathUI();
+    document.getElementById('math-status').innerText = problemCount === 1 ? "答えを入力してENTER" : "解読しろ！(SOLVE IT)";
+    document.getElementById('math-status').style.color = "#00ffff";
     problemStartTime = Date.now(); 
+    
+    showMathUI();
 }
 
 function submitAnswer() {
@@ -452,25 +507,27 @@ function submitAnswer() {
     
     let numVal = parseFloat(currentInputStr); 
     let timeTaken = Date.now() - problemStartTime;
+    let problemBox = document.getElementById('problem-box');
     
     if (Math.abs(numVal - currentAnswer) < 0.0001) {
         // 正解
-        if(db) db.collection('learning_logs').add({userId, level: currentPlayedLevel, problem: currentProblemString, userAnswer: numVal, isCorrect: true, timeTakenMs: timeTaken, timestamp: firebase.firestore.FieldValue.serverTimestamp()}).catch(e=>{});
+        saveLearningLog(currentProblemString, numVal, true, timeTaken); 
         currentAnswer = NaN; playSound('correct'); canOperate = true; 
         isNextHidden = false; drawNextPiece();
         
-        document.getElementById('problem-box').classList.add('correct-flash');
+        problemBox.classList.add('correct-flash');
         showTetrisUI(); 
         
         if(gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(drop, dropSpeed);
         update();
     } else {
-        // スパルタ・ペナルティ発動
-        if(db) db.collection('learning_logs').add({userId, level: currentPlayedLevel, problem: currentProblemString, userAnswer: numVal, isCorrect: false, timeTakenMs: timeTaken, timestamp: firebase.firestore.FieldValue.serverTimestamp()}).catch(e=>{});
+        // ペナルティ
+        saveLearningLog(currentProblemString, numVal, false, timeTaken); 
         playHeavyMissEffect();
         currentInputStr = ""; updateInputDisplay();
         isNextHidden = true; drawNextPiece(); 
+        document.getElementById('math-status').innerText = "PENALTY! NEXT隠滅"; document.getElementById('math-status').style.color = "#ff0000";
     }
 }
 
@@ -512,7 +569,7 @@ requestAnimationFrame(updateParticles);
 
 function showPopupText(text) {
     let el = document.createElement('div'); el.className = 'popup-text'; el.innerText = text;
-    document.getElementById('canvas-container').appendChild(el);
+    document.getElementById('canvas-wrapper').appendChild(el);
     setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 1000);
 }
 
@@ -534,7 +591,7 @@ function drawGhost() {
 }
 function drawNextPiece() {
     nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-    if (isNextHidden) { nextCtx.fillStyle = '#ff0055'; nextCtx.font = 'bold 30px Arial'; nextCtx.textAlign = 'center'; nextCtx.textBaseline = 'middle'; nextCtx.fillText('❓', nextCanvas.width/2, nextCanvas.height/2 + 3); return; }
+    if (isNextHidden) { nextCtx.fillStyle = '#ff0055'; nextCtx.font = 'bold 40px Arial'; nextCtx.textAlign = 'center'; nextCtx.textBaseline = 'middle'; nextCtx.fillText('❓', nextCanvas.width/2, nextCanvas.height/2 + 4); return; }
     if(!nextPiece) return; const offsetX = nextPiece.shape[0].length === 4 ? 0.5 : 1; const offsetY = nextPiece.shape.length === 1 ? 2 : 1.5;
     nextPiece.shape.forEach((row, y) => { row.forEach((value, x) => { if (value) drawSquare(nextCtx, x + offsetX, y + offsetY, nextPiece.type, 20); }); });
 }
@@ -617,7 +674,7 @@ async function processChains(comboCount = 0) {
 }
 
 function applyGravity() { for (let c = 0; c < COLS; c++) { let emptyRow = ROWS - 1; for (let r = ROWS - 1; r >= 0; r--) { if (board[r][c] !== 0) { if (r !== emptyRow) { board[emptyRow][c] = board[r][c]; board[r][c] = 0; } emptyRow--; } } } }
-function triggerShake(level) { let wrapper = document.getElementById('canvas-container'); wrapper.classList.remove('shake-animation'); void wrapper.offsetWidth; wrapper.style.animationDuration = (0.2 + level*0.1) + 's'; wrapper.classList.add('shake-animation'); }
+function triggerShake(level) { let wrapper = document.getElementById('canvas-wrapper'); wrapper.classList.remove('shake-animation'); void wrapper.offsetWidth; wrapper.style.animationDuration = (0.2 + level*0.1) + 's'; wrapper.classList.add('shake-animation'); }
 function drop() { if (!canOperate || isGameOver) return; if (!collideAt(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) { currentPiece.y++; update(); } else { canOperate = false; merge(); processChains(); } }
 function update() { drawBoard(); drawGhost(); drawPiece(); }
 
@@ -632,7 +689,7 @@ function hardDrop() { if (!canOperate || isGameOver) return; while (!collideAt(c
 // ==========================================
 document.getElementById('start-btn').addEventListener('click', () => { 
     initAudio(); 
-    document.getElementById('side-panel').classList.remove('show-modal'); 
+    closeMobileSettings();
     startGame(); 
 });
 
@@ -646,14 +703,21 @@ function startGame() {
 
     updateScoreDisplay();
     document.getElementById('combo-display').innerText = "";
-    document.getElementById('game-over-overlay').classList.add('hidden');
     
+    document.getElementById('game-over-overlay').classList.add('hidden');
+
     if(gameInterval) clearInterval(gameInterval); 
     spawnPiece(); 
+    
+    // 初期画面設定
+    if(!isMobile()) {
+        document.getElementById('score-pc').style.display = 'block';
+    }
 }
 
 function gameOver() {
     isGameOver = true; if(gameInterval) clearInterval(gameInterval);
+    document.getElementById('math-status').innerText = "SYSTEM DOWN"; document.getElementById('math-status').style.color = "#ff0055";
     document.getElementById('game-over-overlay').classList.remove('hidden');
     finalScoreToSave = score; checkRanking(finalScoreToSave);
 }
@@ -661,17 +725,18 @@ function gameOver() {
 // ==========================================
 // 🌍 ランキング
 // ==========================================
-async function loadRanking(highlightId = null) {
+async function loadRanking() {
     const displayLevel = document.getElementById('level').value;
-    const boardEl = document.getElementById('ranking-board');
+    const boardEl = document.getElementById('ranking-list');
     if (!db) { boardEl.innerHTML = '<span style="color:#ff0055;">※Firebase未設定</span>'; return []; }
     try {
         const querySnapshot = await db.collection(`ranks_level_${displayLevel}`).orderBy("score", "desc").limit(10).get();
-        let html = ''; querySnapshot.forEach((doc, i) => { const r = doc.data(); const hl = doc.id === highlightId ? 'highlight' : ''; html += `<div class="rank-item ${hl}"><span>${i+1}位: ${r.name}</span><span>${r.score} 点</span></div>`; });
+        let html = ''; querySnapshot.forEach((doc, i) => { const r = doc.data(); html += `<div class="rank-item"><span>${i+1}位: ${r.name}</span><span>${r.score} 点</span></div>`; });
         boardEl.innerHTML = html || 'まだ記録がありません';
     } catch (error) { boardEl.innerHTML = 'エラー発生'; }
 }
-document.getElementById('level').addEventListener('change', () => loadRanking());
+document.getElementById('level').addEventListener('change', () => { if(isGameOver) loadRanking(); });
+
 async function checkRanking(finalScore) {
     if (finalScore === 0 || !db) return;
     const querySnapshot = await db.collection(`ranks_level_${currentPlayedLevel}`).orderBy("score", "desc").limit(10).get();
@@ -680,15 +745,25 @@ async function checkRanking(finalScore) {
         document.getElementById('dq-modal').classList.remove('hidden'); document.getElementById('dq-name').value = '';
     }
 }
+
 function saveNameRecord() {
     let name = document.getElementById('dq-name').value || 'ゆうしゃ';
     if(db) {
-        db.collection(`ranks_level_${currentPlayedLevel}`).add({ name: name, score: finalScoreToSave, timestamp: new Date() }).then(docRef => {
-            document.getElementById('dq-modal').classList.add('hidden'); document.getElementById('level').value = currentPlayedLevel; openRanking(); loadRanking(docRef.id); 
+        db.collection(`ranks_level_${currentPlayedLevel}`).add({ name: name, score: finalScoreToSave, timestamp: new Date() }).then(() => {
+            document.getElementById('dq-modal').classList.add('hidden'); loadRanking(); 
         }).catch(e=>{});
     }
 }
-window.addEventListener('load', loadRanking);
+
+// 初期化
+window.addEventListener('load', () => {
+    // 画面サイズに応じて初期表示を設定
+    if(!isMobile()) {
+        document.getElementById('left-panel').style.display = 'flex';
+        document.getElementById('score-pc').style.display = 'block';
+    }
+    loadRanking();
+});
 </script>
 </body>
 </html>
