@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Math & Tetris - 全世界公開版 -</title>
+    <title>Math & Tetris - 全世界公開ビッグバン版 -</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
@@ -17,7 +17,6 @@
         .score-box { font-size: 24px; font-weight: 900; margin: 0;}
         .menu-btn { background: #334155; color: #38bdf8; border: 2px solid #38bdf8; border-radius: 8px; padding: 6px 12px; font-weight: bold; cursor: pointer; }
 
-        /* 💡 虹色に輝くスーパースコア */
         .super-score {
             background: linear-gradient(45deg, #facc15, #f43f5e, #38bdf8, #a855f7, #facc15);
             background-size: 300% 300%;
@@ -34,7 +33,7 @@
         #center-panel { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; min-height: 0; width: 100%; box-sizing: border-box;}
         #canvas-wrapper { position: relative; height: 100%; aspect-ratio: 1/2; max-width: 100%; display: flex; justify-content: center; align-items: center;}
         #gameCanvas, #particleCanvas { position: absolute; top: 0; height: 100%; border-radius: 8px; aspect-ratio: 1/2; }
-        #gameCanvas { background-color: #020617; border: 3px solid #38bdf8; box-sizing: border-box; box-shadow: 0 0 15px rgba(56,189,248,0.3);}
+        #gameCanvas { background-color: #020617; border: 3px solid #38bdf8; box-sizing: border-box; box-shadow: 0 0 15px rgba(56,189,248,0.3); transition: background-color 0.1s;}
         #particleCanvas { z-index: 5; pointer-events: none; }
         
         #next-box { position: absolute; top: 5px; right: 5px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid #38bdf8; border-radius: 8px; z-index: 6; display: flex; justify-content: center; align-items: center;}
@@ -115,7 +114,7 @@
         @keyframes errShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-15px); } 40%, 80% { transform: translateX(15px); } }
         
         .shake-animation { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 0%, 100% { transform: translate3d(0,0,0); } 20%, 60% { transform: translate3d(-10px,8px,0); } 40%, 80% { transform: translate3d(10px,-8px,0); } }
+        @keyframes shake { 0%, 100% { transform: translate3d(0,0,0); } 20%, 60% { transform: translate3d(-15px,12px,0); } 40%, 80% { transform: translate3d(15px,-12px,0); } }
         
         .popup-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); color: #facc15; font-size: 45px; font-weight: 900; text-shadow: 0 0 20px #000; z-index: 20; pointer-events: none; animation: popUp 1s forwards; white-space: nowrap;}
         @keyframes popUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(0.5); } 15% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -70%) scale(1.1); } }
@@ -258,7 +257,7 @@
 <div id="load-modal" class="hidden mobile-modal" style="z-index: 300;">
     <div style="background:#1e293b; border:4px solid #eab308; border-radius:12px; padding:30px; width:90%; max-width:400px; text-align:center;">
         <h2 style="color:#eab308; margin-top:0;">続きから遊ぶ</h2>
-        <p style="font-size:16px; color:#fff;">6ケタのパスワードを入力してね。<br>（同じスマホなら空っぽでもOK！）</p>
+        <p style="font-size:16px; color:#fff;">6ケタのパスワードを入力してね。<br>（そのまま「再開する」を押してもOK）</p>
         <input type="text" id="load-code-input" placeholder="パスワード (6ケタ)" autocomplete="off" oninput="this.value = this.value.toUpperCase()" style="width:100%; padding:15px; font-size:24px; text-align:center; background:#fff; color:#000; border:2px solid #64748b; border-radius:8px; margin-bottom:20px; box-sizing:border-box;">
         <button class="action-btn save-btn" onclick="executeLoad()">再開する！</button>
         <button class="action-btn close-btn" onclick="document.getElementById('load-modal').classList.add('hidden')">もどる</button>
@@ -295,9 +294,8 @@ const firebaseConfig = {
   appId: "1:936743834549:web:b82f45ce7c704095b1fffc"
 };
 
-// 💡 6ケタの安全なパスワードを生成する関数
 function generateSaveCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 紛らわしいO, I, 0, 1などを除外
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
     let code = '';
     for (let i = 0; i < 6; i++) { code += chars.charAt(Math.floor(Math.random() * chars.length)); }
     return code;
@@ -386,15 +384,16 @@ function updateScoreDisplay() {
 }
 function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} }
 
-// --- オーディオ (大爆発) ---
+// --- 💥 リアルなビッグバンサウンド ---
 function initAudio() { try { if (audioCtx.state === 'suspended') audioCtx.resume(); } catch(e){} }
 
-function playExplosion(comboCount) {
+function playExplosion(comboCount, isBigBang = false) {
     try {
         if (!audioCtx || audioCtx.state === 'suspended') return;
         const time = audioCtx.currentTime;
-        const duration = 0.8 + (Math.min(comboCount, 5) * 0.2); 
+        const duration = isBigBang ? 1.5 : 0.8 + (Math.min(comboCount, 5) * 0.2); 
 
+        // 1. ノイズ爆発音（衝撃波）
         const bufferSize = audioCtx.sampleRate * duration;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -402,24 +401,28 @@ function playExplosion(comboCount) {
         const noise = audioCtx.createBufferSource(); noise.buffer = buffer;
 
         const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1500 + (comboCount * 500), time);
+        // ビッグバンの時はより激しく、長く響く
+        filter.frequency.setValueAtTime(isBigBang ? 3000 : 1500 + (comboCount * 500), time);
         filter.frequency.exponentialRampToValueAtTime(10, time + duration);
 
         const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(1.5 + (comboCount * 0.3), time); 
+        gain.gain.setValueAtTime(isBigBang ? 2.0 : 1.5 + (comboCount * 0.3), time); 
         gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
 
         noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
         noise.start(time);
 
+        // 2. ドォォン！という腹に響くサブベース
         const subOsc = audioCtx.createOscillator(); subOsc.type = 'triangle'; 
-        subOsc.frequency.setValueAtTime(120 + (comboCount * 10), time);
-        subOsc.frequency.exponentialRampToValueAtTime(10, time + duration * 0.8);
+        subOsc.frequency.setValueAtTime(isBigBang ? 200 : 120 + (comboCount * 10), time);
+        subOsc.frequency.exponentialRampToValueAtTime(10, time + duration * (isBigBang ? 1.0 : 0.8));
+        
         const subGain = audioCtx.createGain();
-        subGain.gain.setValueAtTime(2.0, time);
-        subGain.gain.exponentialRampToValueAtTime(0.01, time + duration * 0.8);
+        subGain.gain.setValueAtTime(isBigBang ? 2.5 : 2.0, time);
+        subGain.gain.exponentialRampToValueAtTime(0.01, time + duration * (isBigBang ? 1.0 : 0.8));
+        
         subOsc.connect(subGain); subGain.connect(audioCtx.destination);
-        subOsc.start(time); subOsc.stop(time + duration * 0.8);
+        subOsc.start(time); subOsc.stop(time + duration * (isBigBang ? 1.0 : 0.8));
     } catch(e){}
 }
 
@@ -467,7 +470,7 @@ function playSound(type) {
     } catch(e){}
 }
 
-// --- 入力処理 ---
+// --- 入力処理 (PC・スマホ完全統合) ---
 function updateInputDisplay() {
     if(isMobile()){
         document.getElementById('math-input-display').style.display = 'block';
@@ -646,7 +649,6 @@ function submitAnswer(e) {
     let problemBox = document.getElementById('problem-box');
     
     if (Math.abs(numVal - currentAnswer) < 0.0001) {
-        // 正解
         currentAnswer = NaN; canOperate = true; 
         isNextHidden = false; drawNextPiece();
         
@@ -669,7 +671,6 @@ function submitAnswer(e) {
         gameInterval = setInterval(drop, dropSpeed);
         update();
     } else {
-        // ペナルティ
         playHeavyMissEffect();
         let penalty = 50 * currentSpeedLevel;
         score = Math.max(0, score - penalty); updateScoreDisplay();
@@ -697,8 +698,8 @@ function stopAction(e) { if(e) e.preventDefault(); if(actionTimer) clearInterval
 // --- 描画 ---
 let particles = [];
 function createParticles(x, y, colorStr, isSuper = false) {
-    let count = isSuper ? 25 : 10; 
-    for (let i = 0; i < count; i++) particles.push({ x: x * BLOCK_SIZE + BLOCK_SIZE / 2, y: y * BLOCK_SIZE + BLOCK_SIZE / 2, vx: (Math.random() - 0.5) * (isSuper?35:20), vy: (Math.random() - 0.5) * (isSuper?35:20) - 5, life: 1.0, color: colorStr, size: Math.random() * (isSuper?8:4) + 2 });
+    let count = isSuper ? 30 : 10; 
+    for (let i = 0; i < count; i++) particles.push({ x: x * BLOCK_SIZE + BLOCK_SIZE / 2, y: y * BLOCK_SIZE + BLOCK_SIZE / 2, vx: (Math.random() - 0.5) * (isSuper?40:20), vy: (Math.random() - 0.5) * (isSuper?40:20) - 5, life: 1.0, color: colorStr, size: Math.random() * (isSuper?10:4) + 2 });
 }
 function updateParticles() {
     pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
@@ -710,6 +711,12 @@ function updateParticles() {
     pCtx.globalAlpha = 1.0; requestAnimationFrame(updateParticles);
 }
 requestAnimationFrame(updateParticles); 
+
+function showPopupText(text) {
+    let el = document.createElement('div'); el.className = 'popup-text'; el.innerText = text;
+    document.getElementById('canvas-wrapper').appendChild(el);
+    setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, 1000);
+}
 
 function drawSquare(ctxToDraw, x, y, type, size = BLOCK_SIZE) {
     ctxToDraw.fillStyle = COLORS[type]; ctxToDraw.fillRect(x * size, y * size, size, size);
@@ -772,11 +779,20 @@ function collideAt(cx, cy, shape) {
     return false;
 }
 
+// 💡 無料のローカルオートセーブ
+function saveLocalState() {
+    if(isGameOver) { localStorage.removeItem('math_tetris_save_v2'); return; }
+    const state = { board, score, currentPlayedLevel, currentSpeedLevel, piecesPlaced };
+    localStorage.setItem('math_tetris_save_v2', JSON.stringify(state));
+}
+
 function merge() { 
     currentPiece.shape.forEach((row, y) => { row.forEach((value, x) => { if (value) board[currentPiece.y + y][currentPiece.x + x] = currentPiece.type; }); }); 
     piecesPlaced++;
+    saveLocalState();
 }
 
+// 💡 ビッグバン実装！
 async function processChains(comboCount = 0) {
     let linesToClear = []; let hasGoldTrigger = false; let blackBlocksDestroyed = 0;
 
@@ -793,18 +809,22 @@ async function processChains(comboCount = 0) {
 
     let clearedCount = finalLinesToClear.size; let willDestroyAllBlacks = isMassiveClear; 
     
+    // 💡 2段以上消した時は「ビッグバン」判定！
+    let isBigBang = clearedCount >= 2 || hasGoldTrigger || willDestroyAllBlacks;
+    
     if (clearedCount > 0 || willDestroyAllBlacks) {
-        finalLinesToClear.forEach(r => { for (let c = 0; c < COLS; c++) { if (board[r][c] !== 0) { createParticles(c, r, COLORS[board[r][c]]||'#fff', hasGoldTrigger); if (board[r][c]===10) blackBlocksDestroyed++; } } });
+        finalLinesToClear.forEach(r => { for (let c = 0; c < COLS; c++) { if (board[r][c] !== 0) { createParticles(c, r, COLORS[board[r][c]]||'#fff', isBigBang); if (board[r][c]===10) blackBlocksDestroyed++; } } });
         if (willDestroyAllBlacks) { for (let r=0; r<ROWS; r++) { for (let c=0; c<COLS; c++) { if (board[r][c]===10 && !finalLinesToClear.has(r)) { createParticles(c, r, COLORS[10], true); board[r][c]=0; blackBlocksDestroyed++; } } } }
         finalLinesToClear.forEach(r => { for(let c=0; c<COLS; c++) board[r][c] = 0; }); drawBoard(); 
 
         comboCount++; let comboMultiplier = comboCount > 1 ? comboCount : 1;
         let gainedScore = clearedCount * 100 * currentSpeedLevel * comboMultiplier;
         
-        playExplosion(comboCount); 
+        playExplosion(comboCount, isBigBang); // 💥 ビッグバン音
         
-        if (hasGoldTrigger) { gainedScore *= 2; triggerShake(3); vibrate(100); showFloatingText("💥BOMB!", "#facc15", "40%", "40px"); } 
-        else if (willDestroyAllBlacks) { triggerShake(3); vibrate(100); showFloatingText("CRITICAL!!", "#f43f5e", "40%", "40px"); } 
+        if (hasGoldTrigger) { gainedScore *= 2; triggerShake(5); vibrate(100); showFloatingText("💥BOMB!", "#facc15", "40%", "40px"); } 
+        else if (willDestroyAllBlacks) { triggerShake(5); vibrate(100); showFloatingText("CRITICAL!!", "#f43f5e", "40%", "40px"); } 
+        else if (isBigBang) { triggerShake(4); vibrate(80); showFloatingText("💥BIG BANG!!", "#38bdf8", "40%", "45px"); }
         else { triggerShake(1); vibrate(30);}
         
         if (blackBlocksDestroyed > 0) gainedScore += (blackBlocksDestroyed * 1000); 
@@ -818,13 +838,21 @@ async function processChains(comboCount = 0) {
         if (blackBlocksDestroyed > 0) displayMsg += ` BLACK x${blackBlocksDestroyed} `;
         document.getElementById('combo-display').innerText = displayMsg;
         
-        canvas.style.backgroundColor = hasGoldTrigger ? "#facc15" : (willDestroyAllBlacks ? "#f43f5e" : "#fff"); 
-        setTimeout(() => canvas.style.backgroundColor = "#020617", 150);
+        // 💡 画面の白飛びフラッシュ（ビッグバン時）
+        if (isBigBang) {
+            const gameCanvas = document.getElementById('gameCanvas');
+            const originalBg = gameCanvas.style.backgroundColor;
+            gameCanvas.style.backgroundColor = "#ffffff"; 
+            setTimeout(() => gameCanvas.style.backgroundColor = originalBg, 200);
+        } else {
+            canvas.style.backgroundColor = "#020617"; 
+        }
 
         await new Promise(resolve => setTimeout(resolve, 300)); applyGravity(); drawBoard();
         await new Promise(resolve => setTimeout(resolve, 200)); await processChains(comboCount);
     } else { 
         if(comboCount === 0) document.getElementById('combo-display').innerText = ""; 
+        saveLocalState();
         spawnPiece(); 
     }
 }
@@ -873,10 +901,39 @@ function openLoadModal() {
 }
 
 async function executeLoad() {
-    if(!db) { alert("インターネットに接続されていません。"); return; }
     let code = document.getElementById('load-code-input').value;
-    if(!code) code = mySaveCode; 
+    if(!code) {
+        // パスワード空欄なら、ローカルの無料セーブデータを優先的に復元！
+        const localSaved = localStorage.getItem('math_tetris_save_v2');
+        if(localSaved) {
+            initAudio();
+            const state = JSON.parse(localSaved);
+            board = state.board; score = state.score; currentPlayedLevel = state.currentPlayedLevel; 
+            currentSpeedLevel = state.currentSpeedLevel; piecesPlaced = state.piecesPlaced;
+            
+            document.getElementById('level').value = currentPlayedLevel;
+            document.getElementById('speed').value = currentSpeedLevel;
+            dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200)); 
+            
+            combo = 0; isGameOver = false; nextPiece = null; currentInputStr = ""; recentProblems = [];
+            updateScoreDisplay();
+            
+            document.getElementById('load-modal').classList.add('hidden');
+            document.getElementById('game-over-overlay').classList.add('hidden');
+            document.getElementById('close-settings-btn').style.display = 'block';
+            document.getElementById('save-quit-btn').style.display = 'block';
+            
+            if(gameInterval) clearInterval(gameInterval); 
+            spawnPiece(); 
+            update();
+            return;
+        } else {
+            code = mySaveCode; 
+        }
+    }
 
+    // パスワードがある場合はクラウドから復元
+    if(!db) { alert("インターネットに接続されていません。"); return; }
     try {
         const doc = await db.collection('saved_games').doc(code).get();
         if(doc.exists) {
@@ -940,6 +997,7 @@ function gameOver() {
     document.getElementById('math-status').innerText = "ゲームオーバー"; document.getElementById('math-status').style.color = "#e11d48";
     document.getElementById('game-over-overlay').classList.remove('hidden');
     document.getElementById('save-quit-btn').style.display = 'none';
+    localStorage.removeItem('math_tetris_save_v2');
     finalScoreToSave = score; checkRanking(finalScoreToSave);
 }
 
@@ -980,6 +1038,12 @@ window.addEventListener('load', () => {
         document.getElementById('left-panel').style.display = 'flex';
         document.getElementById('score-pc').style.display = 'block';
     }
+    
+    // ローカルセーブまたはクラウドパスワードがあれば再開ボタンを表示
+    if(localStorage.getItem('math_tetris_save_v2') || localStorage.getItem('math_tetris_global_code')) {
+        document.getElementById('resume-btn').style.display = 'block';
+    }
+    
     loadRanking();
 });
 </script>
