@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ブロック計算パズル - 完全安定版 -</title>
+    <title>ブロック計算パズル - 収益化完全版 -</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
@@ -91,7 +91,6 @@
         
         #combo-display { color: #facc15; font-weight: bold; font-size: 16px; text-align: center; height: 20px; margin-bottom: 5px;}
 
-        /* 💻 パソコン用レイアウト */
         @media (min-width: 800px) {
             #main-content { 
                 flex-direction: row; 
@@ -190,7 +189,6 @@
 
         #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,6,23,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
         
-        /* 💡 スクロール＆美しいランキング表示のCSS設定 */
         #ranking-board { 
             flex: 1; 
             min-height: 150px;
@@ -206,13 +204,7 @@
         #ranking-board::-webkit-scrollbar-track { background: #1e293b; }
         #ranking-board::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 3px; }
         
-        .rank-item { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            padding: 8px 5px; 
-            border-bottom: 1px solid #334155;
-        }
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #334155;}
         .rank-pos { font-weight: bold; width: 50px; flex-shrink: 0; }
         .rank-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 10px; color: #fff;}
         .rank-score { font-weight: bold; color: #4ade80; flex-shrink: 0; }
@@ -244,11 +236,24 @@
             cursor: pointer;
             border-radius: 4px;
             overflow: hidden;
+            position: relative;
         }
         .sponsor-banner img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
+        }
+        /* 💡 広告マークの追加 */
+        .sponsor-label {
+            position: absolute;
+            top: 0; left: 0;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            font-size: 8px;
+            padding: 2px 4px;
+            border-bottom-right-radius: 4px;
+            z-index: 2;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -414,17 +419,36 @@
 </div>
 
 <script>
-// 💡 iPhoneの音消え対策：画面のアクション時にスリープを解除する
-function initAudio() { 
-    try { 
+// 💡 iPhoneの音消え対策：超強力なスリープ防止＆復帰機能
+let audioUnlocked = false;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function unlockAndWakeAudio() {
+    try {
         if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume(); 
+            audioCtx.resume();
         }
-    } catch(e){} 
+        // iPhoneでスリープを強制解除するため、一度だけ「無音」を流し込む
+        if (!audioUnlocked && audioCtx) {
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+            audioUnlocked = true;
+        }
+    } catch(e) {}
 }
-document.addEventListener('touchstart', initAudio, { passive: true });
-document.addEventListener('mousedown', initAudio, { passive: true });
-document.addEventListener('keydown', initAudio, { passive: true });
+
+// 画面のあらゆるタッチやクリックで叩き起こす
+document.addEventListener('touchstart', unlockAndWakeAudio, { passive: true });
+document.addEventListener('mousedown', unlockAndWakeAudio, { passive: true });
+document.addEventListener('keydown', unlockAndWakeAudio, { passive: true });
+// スマホがバックグラウンドから復帰した時にも叩き起こす
+document.addEventListener('visibilitychange', () => { 
+    if(document.visibilityState === 'visible') unlockAndWakeAudio(); 
+});
+
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 let lastTouchEnd = 0;
 document.addEventListener('touchend', e => { let now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now; }, { passive: false });
@@ -484,8 +508,6 @@ let currentInputStr = "";
 let timeLimitSec = 0;
 let timerAnimFrame = null;
 let recentProblems = [];
-
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 const SHAPES = [
     [], 
@@ -612,7 +634,7 @@ function playHeavyMissEffect() {
 
 function playSound(type) {
     try {
-        if (!audioCtx || audioCtx.state === 'suspended') return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.connect(gain); gain.connect(audioCtx.destination);
         if (type === 'correct') { 
@@ -678,12 +700,10 @@ document.addEventListener('keydown', (e) => {
     }
 }, { passive: false });
 
-// 💡 ゲーム途中にレベルを変更してもそのまま続きが遊べるプログラム
 document.getElementById('level').addEventListener('change', (e) => { 
     currentPlayedLevel = e.target.value; 
     cachedRankingHTML = ''; 
     loadRanking(); 
-    
     if (!isGameOver && !canOperate && problemCount > 0) {
         showFloatingText(`レベル ${currentPlayedLevel} に変更！`, "#4ade80", "40%", "30px");
         generateMathProblem(); 
@@ -786,12 +806,11 @@ function generateMathProblem() {
             case "12": n2 = Math.floor(Math.random()*10)+1; pStr = `29 × ${n2} ＝ ?`; answer = 29 * n2; break;
             case "13": n2 = Math.floor(Math.random()*10)+1; pStr = `37 × ${n2} ＝ ?`; answer = 37 * n2; break;
             case "14": n1 = Math.floor(Math.random()*90)+10; n2 = Math.floor(Math.random()*90)+10; pStr = `${n1} × ${n2} ＝ ?`; answer = n1 * n2; break;
-            // 💡 Lv15: 2桁÷2桁で、必ず小数点が出ない（割り切れる）整数になるプログラム
             case "15": 
-                answer = Math.floor(Math.random() * 8) + 2; // 答えは2〜9
-                let maxDivisor = Math.floor(99 / answer); // 割られる数が99を超えないための最大値
-                n2 = Math.floor(Math.random() * (maxDivisor - 10 + 1)) + 10; // 割る数（10〜）
-                n1 = answer * n2; // 割られる数（必ず2桁になる）
+                answer = Math.floor(Math.random() * 8) + 2;
+                let maxDivisor = Math.floor(99 / answer);
+                n2 = Math.floor(Math.random() * (maxDivisor - 10 + 1)) + 10;
+                n1 = answer * n2;
                 pStr = `${n1} ÷ ${n2} ＝ ?`; 
                 break;
         }
@@ -1211,7 +1230,6 @@ function gameOver() {
 let cachedRankingHTML = '';
 let lastRankingFetchTime = 0;
 
-// 💡 ランキング表示部分の大改修（メダル追加・スクロール対応）
 async function loadRanking() {
     const displayLevel = document.getElementById('level').value;
     const boardEl = document.getElementById('ranking-list');
@@ -1233,7 +1251,6 @@ async function loadRanking() {
             let rankStyle = '';
             let rankLabel = `${i+1}位`;
             
-            // トップ3にメダルと色をつける
             if(i === 0) { rankStyle = 'color: #fbbf24; font-size: 1.1em;'; rankLabel = '🥇 1位'; }
             else if(i === 1) { rankStyle = 'color: #94a3b8; font-size: 1.05em;'; rankLabel = '🥈 2位'; }
             else if(i === 2) { rankStyle = 'color: #b45309; font-size: 1.05em;'; rankLabel = '🥉 3位'; }
@@ -1274,6 +1291,7 @@ function saveNameRecord() {
     }
 }
 
+// 👇 ここから下がスポンサーの設定リストです 👇
 const sponsors = [
     { image: "https://via.placeholder.com/320x50/333333/888888?text=Sponsor+1", url: "https://example.com" },
     { image: "https://via.placeholder.com/320x50/333333/888888?text=Sponsor+2", url: "" },
@@ -1292,6 +1310,11 @@ function updateSponsors() {
         let el = document.createElement('div');
         el.className = 'sponsor-banner';
         
+        let label = document.createElement('div');
+        label.className = 'sponsor-label';
+        label.innerText = '広告';
+        el.appendChild(label);
+        
         if (sp.image) {
             let img = document.createElement('img');
             img.src = sp.image;
@@ -1302,7 +1325,15 @@ function updateSponsors() {
         }
         
         if (sp.url) {
-            el.onclick = () => window.open(sp.url, '_blank');
+            el.onclick = () => {
+                // 💡 AIの追加機能：広告がクリックされたらGoogleアナリティクスに証拠を残す！
+                try {
+                    if(typeof firebase !== 'undefined' && firebase.analytics) {
+                        firebase.analytics().logEvent('sponsor_click', { sponsor_url: sp.url });
+                    }
+                } catch(e){}
+                window.open(sp.url, '_blank');
+            };
         }
         
         container.appendChild(el);
