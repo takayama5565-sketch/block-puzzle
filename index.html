@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ブロック計算パズル - 収益化完全版 -</title>
+    <title>ブロック計算パズル - スポンサー獲得版 -</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
@@ -35,7 +35,7 @@
 
         #left-panel { display: none; flex-direction: column; padding: 20px; background: #1e293b; border-radius: 12px; border: 3px solid #38bdf8; box-sizing: border-box; overflow-y: auto; flex: 1;}
         
-        #center-panel { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; min-height: 0; width: 100%; box-sizing: border-box;}
+        #center-panel { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; min-height: 0; width: 100%; box-sizing: border-box; transition: opacity 0.3s;}
         #canvas-wrapper { position: relative; height: 100%; aspect-ratio: 1/2; max-width: 100%; display: flex; justify-content: center; align-items: center;}
         
         #gameCanvas, #particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
@@ -58,7 +58,7 @@
         #timer-bar-fill { height: 100%; width: 100%; background: #4ade80; transition: width 0.1s linear, background-color 0.3s; }
 
         .math-row { display: flex; align-items: center; justify-content: space-between; background: #0f172a; border: 3px dashed #facc15; border-radius: 12px; padding: 10px; margin-bottom: 5px; transition: 0.1s;}
-        #math-problem { font-size: 26px; font-weight: bold; color: #facc15; }
+        #math-problem { font-size: 26px; font-weight: bold; color: #facc15; transition: opacity 0.3s;}
         #math-input-display { font-size: 26px; font-weight: bold; color: #fff; background: #334155; padding: 5px 15px; border-radius: 8px; min-width: 80px; text-align: right; border: 2px solid #64748b; height: 40px; line-height: 40px; box-sizing: border-box;}
         
         #numpad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: 1; }
@@ -189,12 +189,11 @@
 
         #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,6,23,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
         
-        /* 💡 ランキング枠（絶対に押し潰されないように修正） */
         #ranking-board { 
             display: flex;
             flex-direction: column;
             flex: 1 1 auto; 
-            min-height: 200px; /* パソコンでもスマホでも高さを確保 */
+            min-height: 200px;
             text-align: left; 
             font-size: 14px; 
             margin-top: 10px; 
@@ -215,7 +214,7 @@
         .rank-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 10px; color: #fff;}
         .rank-score { font-weight: bold; color: #4ade80; flex-shrink: 0; white-space: nowrap; }
 
-        /* スポンサー枠 */
+        /* 💡 修正：スポンサー募集用の目立つデザイン枠 */
         #sponsor-container {
             flex: 0 0 60px;
             background: #000;
@@ -237,28 +236,37 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #888;
-            font-size: 12px;
             cursor: pointer;
             border-radius: 4px;
             overflow: hidden;
             position: relative;
+            text-decoration: none;
         }
         .sponsor-banner img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .sponsor-label {
-            position: absolute;
-            top: 0; left: 0;
-            background: rgba(0,0,0,0.6);
-            color: #fff;
-            font-size: 8px;
-            padding: 2px 4px;
-            border-bottom-right-radius: 4px;
-            z-index: 2;
-            pointer-events: none;
+        .sponsor-recruit {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: #facc15;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed #facc15;
+            box-sizing: border-box;
+            animation: pulse-sponsor 2s infinite;
+        }
+        .sponsor-recruit .main-text { font-size: 16px; font-weight: 900; letter-spacing: 1px;}
+        .sponsor-recruit .sub-text { font-size: 10px; color: #94a3b8; margin-top: 2px;}
+        
+        @keyframes pulse-sponsor {
+            0% { box-shadow: 0 0 5px rgba(250, 204, 21, 0.2); }
+            50% { box-shadow: 0 0 15px rgba(250, 204, 21, 0.6); }
+            100% { box-shadow: 0 0 5px rgba(250, 204, 21, 0.2); }
         }
     </style>
 </head>
@@ -322,7 +330,7 @@
             </div>
 
             <div id="continue-buttons" style="display: none;">
-                <button class="action-btn save-btn" onclick="executeLoad()" style="display:block;">▶️ 続きから遊ぶ</button>
+                <button class="action-btn save-btn" onclick="executeLoad()" style="display:block; margin-bottom:10px;">▶️ 続きから遊ぶ</button>
                 <button class="action-btn" onclick="handleStartClick(event, true)" style="background:#f43f5e; box-shadow:0 4px 0 #be123c;">⚠️ 記録を消して最初から</button>
             </div>
 
@@ -429,7 +437,6 @@ function forceWakeAudio() {
         if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-        // iPhoneを起こすための無音の空砲を撃つ
         const buffer = audioCtx.createBuffer(1, 1, 22050);
         const source = audioCtx.createBufferSource();
         source.buffer = buffer;
@@ -438,7 +445,6 @@ function forceWakeAudio() {
     } catch(e) {}
 }
 
-// 画面のあらゆるアクションでスピーカーを叩き起こす
 document.body.addEventListener('touchstart', forceWakeAudio, { passive: true, capture: true });
 document.body.addEventListener('touchend', forceWakeAudio, { passive: true, capture: true });
 document.body.addEventListener('click', forceWakeAudio, { passive: true, capture: true });
@@ -477,7 +483,7 @@ const pCanvas = document.getElementById('particleCanvas'); const pCtx = pCanvas.
 const COLS = 9; const ROWS = 18; const BLOCK_SIZE = 30;
 let board = []; let score = 0; let combo = 0; 
 let currentPiece = null; let nextPiece = null;
-let gameInterval; let dropSpeed = 1000; let currentSpeedLevel = 5;
+let gameInterval = null; let dropSpeed = 1000; let currentSpeedLevel = 5;
 let canOperate = false; let currentAnswer = NaN; let isGameOver = true; 
 let problemCount = 0; let piecesPlaced = 0; 
 let currentPlayedLevel = "1"; let problemStartTime = 0; 
@@ -514,6 +520,10 @@ const COLORS = [
 ];
 
 function isMobile() { return window.innerWidth < 800; }
+
+// 💡 チート対策：メニューを開いている時はパズルと計算を隠し、ゲームを完全に一時停止する
+let gameWasRunningBeforeMenu = false;
+
 function openMobileSettings() { 
     if(isMobile()) {
         const panel = document.getElementById('left-panel');
@@ -521,12 +531,55 @@ function openMobileSettings() {
         panel.style.display = 'flex';
         if(!isGameOver) document.getElementById('close-settings-btn').style.display = 'block';
     }
+    
+    // ゲーム進行の一時停止とモザイク処理
+    if(!isGameOver) {
+        document.getElementById('canvas-wrapper').style.opacity = '0.1';
+        document.getElementById('math-problem').style.opacity = '0';
+        
+        if (gameInterval) {
+            clearInterval(gameInterval);
+            gameInterval = null;
+            gameWasRunningBeforeMenu = true;
+        } else {
+            gameWasRunningBeforeMenu = false;
+        }
+        
+        if(timerAnimFrame) {
+            cancelAnimationFrame(timerAnimFrame);
+            timerAnimFrame = null;
+        }
+        canOperate = false;
+    }
 }
+
 function closeMobileSettings() { 
     if(isMobile()) {
         const panel = document.getElementById('left-panel');
         panel.classList.remove('mobile-modal');
         panel.style.display = 'none';
+    }
+    
+    // ゲームの再開とモザイク解除
+    if(!isGameOver) {
+        document.getElementById('canvas-wrapper').style.opacity = '1';
+        document.getElementById('math-problem').style.opacity = '1';
+        
+        if (isNaN(currentAnswer)) {
+            // パズルが落ちていた状態ならパズル再開
+            if (gameWasRunningBeforeMenu) {
+                gameInterval = setInterval(drop, dropSpeed);
+                canOperate = true;
+            }
+        } else {
+            // 計算中ならタイマー再開
+            if(timeLimitSec > 0) {
+                // 不公平にならないよう、止めていた時間分だけ開始時間をズラす処理も可能ですが
+                // シンプルにアニメーションだけ再開します
+                problemStartTime = Date.now() - (timeLimitSec * 1000 - parseInt(document.getElementById('timer-bar-fill').style.width || 100)/100 * timeLimitSec * 1000);
+                updateTimer();
+            }
+        }
     }
 }
 
@@ -534,6 +587,13 @@ window.addEventListener('resize', () => {
     if(!isMobile()) {
         document.getElementById('left-panel').style.display = 'flex';
         document.getElementById('left-panel').classList.remove('mobile-modal');
+        // パソコンに切り替わった時はモザイク解除
+        document.getElementById('canvas-wrapper').style.opacity = '1';
+        document.getElementById('math-problem').style.opacity = '1';
+        if(!isGameOver && isNaN(currentAnswer) && !gameInterval) {
+            gameInterval = setInterval(drop, dropSpeed);
+            canOperate = true;
+        }
     } else {
         document.getElementById('left-panel').style.display = 'none';
     }
@@ -665,7 +725,7 @@ document.addEventListener('keydown', (e) => {
     if (document.activeElement.id === 'dq-name') return; 
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault(); 
     
-    if (!isGameOver) {
+    if (!isGameOver && document.getElementById('left-panel').style.display !== 'flex' && isMobile() === false || !isGameOver && !document.getElementById('left-panel').classList.contains('mobile-modal')) {
         if (!canOperate && !isMobile()) {
             if (e.key === 'Enter') submitAnswer();
         } else if (canOperate) {
@@ -1089,28 +1149,36 @@ function executeLoad() {
         closeMobileSettings();
         if(gameInterval) clearInterval(gameInterval); 
         
+        // 💡 AI追加：再開時にいきなり落ちてこないように少しだけ待つ
         setTimeout(() => {
             spawnPiece(); 
             update();
-        }, 100);
+            document.getElementById('canvas-wrapper').style.opacity = '1';
+            document.getElementById('math-problem').style.opacity = '1';
+        }, 300);
     }
 }
 
-// 💡 修正：スタート時のクリックイベントを徹底整理
-function handleStartClick(e, forceNew = false) {
+// 💡 スタートボタンの処理を整理（パソコンでも携帯でも絶対に動くように修正）
+function handleStartClick(e, isNewGame) {
     if(e) e.preventDefault();
     forceWakeAudio(); 
-    closeMobileSettings();
-    setTimeout(() => {
-        startGame(forceNew);
-    }, 50);
-}
-
-function startGame(forceNew = false) {
-    if(forceNew) {
+    
+    // 最初から遊ぶ場合はセーブデータを消す
+    if(isNewGame) {
         localStorage.removeItem('block_puzzle_save');
     }
     
+    closeMobileSettings();
+    document.getElementById('canvas-wrapper').style.opacity = '1';
+    document.getElementById('math-problem').style.opacity = '1';
+    
+    setTimeout(() => {
+        startGame();
+    }, 50);
+}
+
+function startGame() {
     board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     score = 0; combo = 0; isGameOver = false; nextPiece = null; problemCount = 0; piecesPlaced = 0; currentInputStr = ""; recentProblems = [];
     
@@ -1128,12 +1196,13 @@ function startGame(forceNew = false) {
     let mathStatus = document.getElementById('math-status');
     mathStatus.classList.remove('pulse-text');
 
-    if(gameInterval) clearInterval(gameInterval); 
+    if(gameInterval) { clearInterval(gameInterval); gameInterval = null; }
     spawnPiece(); 
 }
 
 function gameOver() {
-    isGameOver = true; if(gameInterval) clearInterval(gameInterval);
+    isGameOver = true; 
+    if(gameInterval) { clearInterval(gameInterval); gameInterval = null; }
     
     let mathStatus = document.getElementById('math-status');
     mathStatus.innerText = "ゲームオーバー"; 
@@ -1145,7 +1214,6 @@ function gameOver() {
     localStorage.removeItem('block_puzzle_save');
     finalScoreToSave = score; checkRanking(finalScoreToSave);
     
-    // ゲームオーバー時は「ゲームをはじめる」ボタンだけを見せる状態に戻す
     document.getElementById('continue-buttons').style.display = 'none';
     document.getElementById('first-time-buttons').style.display = 'block';
 }
@@ -1230,11 +1298,12 @@ function saveNameRecord() {
     }
 }
 
+// 💡 修正：スポンサー募集用のリンク（★あなたのメールアドレスを下の your-email... の部分に入れてください）
 const sponsors = [
-    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
-    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
-    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
-    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" }
+    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" },
+    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" },
+    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" },
+    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" }
 ];
 let currentSponsorIdx = 0;
 
@@ -1245,33 +1314,41 @@ function updateSponsors() {
     
     for (let i = 0; i < slots; i++) {
         let sp = sponsors[(currentSponsorIdx + i) % sponsors.length];
-        let el = document.createElement('div');
+        
+        // 💡 リンクボタン（aタグ）として作成し、クリック可能にする
+        let el = document.createElement('a');
         el.className = 'sponsor-banner';
+        el.href = sp.url;
+        el.target = "_blank";
         
-        let label = document.createElement('div');
-        label.className = 'sponsor-label';
-        label.innerText = '広告';
-        el.appendChild(label);
-        
-        if (sp.image) {
+        if (sp.isRecruit) {
+            // 💡 目立つ「スポンサー募集」の専用デザイン
+            el.innerHTML = `
+                <div class="sponsor-recruit">
+                    <span class="main-text">🌟 スポンサー大募集！</span>
+                    <span class="sub-text">ここをクリックして広告を掲載</span>
+                </div>
+            `;
+        } else if (sp.image) {
+            let label = document.createElement('div');
+            label.className = 'sponsor-label';
+            label.innerText = '広告';
+            el.appendChild(label);
+            
             let img = document.createElement('img');
             img.src = sp.image;
             img.alt = "Sponsor";
             el.appendChild(img);
-        } else {
-            el.innerText = "SPONSOR";
         }
         
-        if (sp.url) {
-            el.onclick = () => {
-                try {
-                    if(typeof firebase !== 'undefined' && firebase.analytics) {
-                        firebase.analytics().logEvent('sponsor_click', { sponsor_url: sp.url });
-                    }
-                } catch(e){}
-                window.open(sp.url, '_blank');
-            };
-        }
+        // アナリティクスへクリック数を記録
+        el.addEventListener('click', () => {
+            try {
+                if(typeof firebase !== 'undefined' && firebase.analytics) {
+                    firebase.analytics().logEvent('sponsor_click', { sponsor_url: sp.url });
+                }
+            } catch(e){}
+        });
         
         container.appendChild(el);
     }
@@ -1284,11 +1361,11 @@ setInterval(updateSponsors, 15000);
 window.addEventListener('load', () => {
     if(!isMobile()) {
         document.getElementById('left-panel').style.display = 'flex';
+        document.getElementById('score-pc').style.display = 'block';
     } else {
         openMobileSettings();
     }
     
-    // 💡 UI自動切り替え：セーブの有無でボタンを変える
     if(localStorage.getItem('block_puzzle_save')) {
         document.getElementById('first-time-buttons').style.display = 'none';
         document.getElementById('continue-buttons').style.display = 'block';
