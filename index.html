@@ -189,13 +189,13 @@
 
         #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,6,23,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
         
-        /* 💡 ランキング枠（スクロール対応＆なめらか設定） */
+        /* ランキング枠（スクロール対応＆「位」の改行防止） */
         #ranking-board { 
             flex: 1; 
             min-height: 150px;
             max-height: 250px;
             overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; /* スマホで滑らかにスクロール */
+            -webkit-overflow-scrolling: touch;
             text-align: left; 
             font-size: 14px; 
             margin-top: 10px; 
@@ -207,9 +207,10 @@
         #ranking-board::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 3px; }
         
         .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #334155;}
-        .rank-pos { font-weight: bold; width: 50px; flex-shrink: 0; }
+        /* widthを広げ、white-spaceで改行を完全阻止 */
+        .rank-pos { font-weight: bold; width: 70px; flex-shrink: 0; white-space: nowrap; }
         .rank-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 10px; color: #fff;}
-        .rank-score { font-weight: bold; color: #4ade80; flex-shrink: 0; }
+        .rank-score { font-weight: bold; color: #4ade80; flex-shrink: 0; white-space: nowrap; }
 
         /* スポンサー枠のレイアウト */
         #sponsor-container {
@@ -271,7 +272,7 @@
         <div id="left-panel">
             <h2 class="pc-title">ブロック計算パズル<br><span style="font-size:14px; color:#aaa;">グローバルモード</span></h2>
             
-            <button class="action-btn save-btn" id="resume-btn" onclick="openLoadModal()" style="display:none;">▶️ 続きから遊ぶ</button>
+            <button class="action-btn save-btn" id="resume-btn" onclick="executeLoad()" style="display:none;">▶️ 続きから遊ぶ</button>
             <button class="action-btn save-btn" id="save-quit-btn" onclick="saveAndQuitGame()" style="display:none;">💾 セーブして終わる</button>
 
             <div class="setting-group">
@@ -315,7 +316,7 @@
                     <option value="10">10 (激ムズ)</option>
                 </select>
             </div>
-            <button class="action-btn" id="start-btn" onclick="startGame()">さいしょから 遊ぶ</button>
+            <button class="action-btn" id="start-btn" onclick="handleStartClick(event)">さいしょから 遊ぶ</button>
             <button class="action-btn close-btn" id="close-settings-btn" onclick="closeMobileSettings()" style="display:none;">ゲームに戻る</button>
 
             <div id="ranking-board">
@@ -393,22 +394,10 @@
 </div>
 
 <div id="save-modal" class="hidden mobile-modal" style="z-index: 300;">
-    <div style="background:#1e293b; border:4px solid #facc15; border-radius:12px; padding:30px; width:90%; max-width:400px; text-align:center;">
-        <h2 style="color:#facc15; margin-top:0;">セーブ完了！</h2>
-        <p style="font-size:16px; color:#fff;">あなたのパスワードは<br>これです！メモしておいてね</p>
-        <div style="background:#000; color:#4ade80; font-size:48px; font-weight:900; padding:10px; border-radius:8px; border:2px dashed #4ade80; margin:20px 0; letter-spacing:5px;" id="save-code-display"></div>
-        <p style="font-size:12px; color:#aaa;">別のスマホやPCでも、このパスワードを<br>入力すれば続きから遊べます。</p>
-        <button class="action-btn" onclick="location.reload()">タイトルへ戻る</button>
-    </div>
-</div>
-
-<div id="load-modal" class="hidden mobile-modal" style="z-index: 300;">
-    <div style="background:#1e293b; border:4px solid #eab308; border-radius:12px; padding:30px; width:90%; max-width:400px; text-align:center;">
-        <h2 style="color:#eab308; margin-top:0;">続きから遊ぶ</h2>
-        <p style="font-size:16px; color:#fff;">6ケタのパスワードを入力してね<br>（同じスマホなら空っぽでもOK）</p>
-        <input type="text" id="load-code-input" placeholder="パスワード (6ケタ)" autocomplete="off" oninput="this.value = this.value.toUpperCase()" style="width:100%; padding:15px; font-size:24px; text-align:center; background:#fff; color:#000; border:2px solid #64748b; border-radius:8px; margin-bottom:20px; box-sizing:border-box;">
-        <button class="action-btn save-btn" style="margin-bottom: 10px; display: block;" onclick="executeLoad()">再開する</button>
-        <button class="action-btn close-btn" onclick="cancelLoadModal()">もどる</button>
+    <div style="background:#1e293b; border:4px solid #4ade80; border-radius:12px; padding:30px; width:90%; max-width:400px; text-align:center;">
+        <h2 style="color:#4ade80; margin-top:0;">セーブ完了！</h2>
+        <p style="font-size:16px; color:#fff; line-height: 1.6;">現在の進行状況を保存しました。<br>次回は「続きから遊ぶ」を押すだけで<br>すぐに再開できます！</p>
+        <button class="action-btn" style="margin-top: 20px;" onclick="location.reload()">タイトルへ戻る</button>
     </div>
 </div>
 
@@ -463,24 +452,7 @@ const firebaseConfig = {
   measurementId: "G-811HH3W7Y4"
 };
 
-function generateSaveCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
-    let code = '';
-    for (let i = 0; i < 6; i++) { code += chars.charAt(Math.floor(Math.random() * chars.length)); }
-    return code;
-}
-
 let db = null;
-let mySaveCode = '000000';
-try {
-    let code = localStorage.getItem('block_puzzle_code');
-    if (!code) { 
-        code = generateSaveCode(); 
-        localStorage.setItem('block_puzzle_code', code); 
-    }
-    mySaveCode = code;
-} catch (e) {}
-
 try {
     if (firebaseConfig.apiKey !== "ここにあなたのAPIキー") {
         firebase.initializeApp(firebaseConfig);
@@ -681,8 +653,7 @@ document.getElementById('real-input-container').addEventListener('submit', (e) =
 });
 
 document.addEventListener('keydown', (e) => {
-    if (document.activeElement.id === 'dq-name' || document.activeElement.id === 'load-code-input') return; 
-    
+    if (document.activeElement.id === 'dq-name') return; 
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault(); 
     
     if (!isGameOver) {
@@ -996,6 +967,7 @@ function collideAt(cx, cy, shape) {
     return false;
 }
 
+// 💡 1タッチで簡単セーブ（パスワード廃止）
 function saveLocalState() {
     if(isGameOver) { localStorage.removeItem('block_puzzle_save'); return; }
     const state = { board, score, currentPlayedLevel, currentSpeedLevel, piecesPlaced };
@@ -1075,119 +1047,58 @@ function dropOne() { if (canOperate && !isGameOver) { drop(); vibrate(5);} }
 function rotatePiece() { if (!canOperate || isGameOver) return; const newShape = currentPiece.shape[0].map((_, i) => currentPiece.shape.map(row => row[i]).reverse()); if (!collideAt(currentPiece.x, currentPiece.y, newShape)) { currentPiece.shape = newShape; update(); vibrate(10);} }
 function hardDrop() { if (!canOperate || isGameOver) return; while (!collideAt(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) { currentPiece.y++; } canOperate = false; merge(); processChains(); vibrate(20);}
 
-async function saveAndQuitGame() {
-    if(!db) { alert("インターネットに接続されていません。"); return; }
+// 💡 セーブ画面の変更
+function saveAndQuitGame() {
     if(isGameOver || board.length === 0) return;
-    
     if(gameInterval) clearInterval(gameInterval);
     canOperate = false;
-
-    const state = {
-        board: JSON.stringify(board),
-        score: score,
-        currentPlayedLevel: document.getElementById('level').value,
-        currentSpeedLevel: document.getElementById('speed').value,
-        timeLimitSec: document.getElementById('time-limit').value
-    };
-
-    try {
-        await db.collection('saved_games').doc(mySaveCode).set(state);
-        document.getElementById('save-code-display').innerText = mySaveCode;
-        document.getElementById('save-modal').classList.remove('hidden');
-        closeMobileSettings();
-    } catch(e) { alert("セーブに失敗しました。"); }
-}
-
-function openLoadModal() {
-    document.getElementById('load-modal').classList.remove('hidden');
+    saveLocalState();
+    document.getElementById('save-modal').classList.remove('hidden');
     closeMobileSettings();
 }
 
-function cancelLoadModal() {
-    document.getElementById('load-modal').classList.add('hidden');
-    if(isMobile() && !isGameOver) {
-        openMobileSettings();
-    } else if (!isMobile()) {
+// 💡 1ボタンで即復帰できるロードシステム
+function executeLoad() {
+    const localSaved = localStorage.getItem('block_puzzle_save');
+    if(localSaved) {
+        initAudio();
+        const state = JSON.parse(localSaved);
+        board = state.board || []; 
+        score = state.score || 0; 
+        currentPlayedLevel = state.currentPlayedLevel || "1"; 
+        currentSpeedLevel = state.currentSpeedLevel || "5"; 
+        piecesPlaced = state.piecesPlaced || 0;
         
-    } else {
-        openMobileSettings(); 
+        document.getElementById('level').value = currentPlayedLevel;
+        document.getElementById('speed').value = currentSpeedLevel;
+        dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200)); 
+        
+        combo = 0; isGameOver = false; nextPiece = null; currentInputStr = ""; recentProblems = [];
+        updateScoreDisplay();
+        
+        document.getElementById('game-over-overlay').classList.add('hidden');
+        document.getElementById('close-settings-btn').style.display = 'block';
+        document.getElementById('save-quit-btn').style.display = 'block';
+        
+        closeMobileSettings();
+        if(gameInterval) clearInterval(gameInterval); 
+        
+        setTimeout(() => {
+            spawnPiece(); 
+            update();
+        }, 100);
     }
 }
 
-async function executeLoad() {
-    let code = document.getElementById('load-code-input').value;
-    
-    if(!code) {
-        const localSaved = localStorage.getItem('block_puzzle_save');
-        if(localSaved) {
-            initAudio();
-            const state = JSON.parse(localSaved);
-            board = state.board || []; 
-            score = state.score || 0; 
-            currentPlayedLevel = state.currentPlayedLevel || "1"; 
-            currentSpeedLevel = state.currentSpeedLevel || "5"; 
-            piecesPlaced = state.piecesPlaced || 0;
-            
-            document.getElementById('level').value = currentPlayedLevel;
-            document.getElementById('speed').value = currentSpeedLevel;
-            dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200)); 
-            
-            combo = 0; isGameOver = false; nextPiece = null; currentInputStr = ""; recentProblems = [];
-            updateScoreDisplay();
-            
-            document.getElementById('load-modal').classList.add('hidden');
-            document.getElementById('game-over-overlay').classList.add('hidden');
-            document.getElementById('close-settings-btn').style.display = 'block';
-            document.getElementById('save-quit-btn').style.display = 'block';
-            
-            if(gameInterval) clearInterval(gameInterval); 
-            spawnPiece(); 
-            update();
-            return;
-        } else {
-            code = mySaveCode; 
-        }
-    }
-
-    if(!db) { alert("インターネットに接続されていません。"); return; }
-    try {
-        const doc = await db.collection('saved_games').doc(code).get();
-        if(doc.exists) {
-            initAudio();
-            const state = doc.data();
-            board = JSON.parse(state.board);
-            score = state.score;
-            
-            document.getElementById('level').value = state.currentPlayedLevel || "1";
-            document.getElementById('speed').value = state.currentSpeedLevel || "5";
-            document.getElementById('time-limit').value = state.timeLimitSec || "0";
-            
-            currentPlayedLevel = document.getElementById('level').value;
-            currentSpeedLevel = parseInt(document.getElementById('speed').value);
-            dropSpeed = Math.max(150, 2200 - (currentSpeedLevel * 200)); 
-
-            combo = 0; isGameOver = false; nextPiece = null; currentInputStr = ""; recentProblems = [];
-            updateScoreDisplay();
-            
-            document.getElementById('load-modal').classList.add('hidden');
-            document.getElementById('game-over-overlay').classList.add('hidden');
-            document.getElementById('close-settings-btn').style.display = 'block';
-            document.getElementById('save-quit-btn').style.display = 'block';
-            
-            if(gameInterval) clearInterval(gameInterval); 
-            spawnPiece(); 
-            update();
-        } else {
-            alert("パスワードがちがうか、データがありません！");
-        }
-    } catch(e) { alert("データの読み込みに失敗しました。"); }
-}
-
-document.getElementById('start-btn').addEventListener('click', () => { 
+// 💡 スマホのもたつきを解消したスタートボタン
+function handleStartClick(e) {
+    if(e) e.preventDefault();
     initAudio(); 
     closeMobileSettings();
-    startGame(); 
-});
+    setTimeout(() => {
+        startGame();
+    }, 50);
+}
 
 function startGame() {
     board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
@@ -1223,12 +1134,17 @@ function gameOver() {
     document.getElementById('save-quit-btn').style.display = 'none';
     localStorage.removeItem('block_puzzle_save');
     finalScoreToSave = score; checkRanking(finalScoreToSave);
+    
+    // ゲームオーバー時はボタンを通常に戻す
+    document.getElementById('start-btn').innerText = "さいしょから 遊ぶ";
+    document.getElementById('start-btn').style.background = "#a855f7";
+    document.getElementById('start-btn').style.boxShadow = "0 4px 0 #7e22ce";
+    document.getElementById('resume-btn').style.display = 'none';
 }
 
 let cachedRankingHTML = '';
 let lastRankingFetchTime = 0;
 
-// 💡 修正：NaN位のバグを完全解消し、カンマ付きスコアと演出を追加！
 async function loadRanking() {
     const displayLevel = document.getElementById('level').value;
     const boardEl = document.getElementById('ranking-list');
@@ -1246,20 +1162,18 @@ async function loadRanking() {
     try {
         const querySnapshot = await db.collection(`ranks_level_${displayLevel}`).orderBy("score", "desc").limit(10).get();
         let html = ''; 
-        let rankCounter = 0; // 👈 ここで順番を自分で数えることで「NaN位」を完全に阻止！
+        let rankCounter = 0; 
         
         querySnapshot.forEach((doc) => { 
             const r = doc.data(); 
             let rankStyle = '';
             let rankLabel = `${rankCounter + 1}位`;
             
-            // トップ3にメダルと色をつける
             if(rankCounter === 0) { rankStyle = 'color: #facc15; font-size: 1.2em; font-weight: 900;'; rankLabel = '🥇 1位'; }
             else if(rankCounter === 1) { rankStyle = 'color: #cbd5e1; font-size: 1.1em; font-weight: bold;'; rankLabel = '🥈 2位'; }
             else if(rankCounter === 2) { rankStyle = 'color: #b45309; font-size: 1.1em; font-weight: bold;'; rankLabel = '🥉 3位'; }
             else { rankStyle = 'color: #e2e8f0;'; }
 
-            // 💡 AI追加：スコアをカンマ区切りで見やすくする
             const displayScore = Number(r.score).toLocaleString();
             
             html += `<div class="rank-item" style="${rankStyle}">
@@ -1271,7 +1185,6 @@ async function loadRanking() {
             rankCounter++;
         });
         
-        // 💡 AI追加：誰もプレイしていない時のワクワクするメッセージ
         if(html === '') { 
             html = `<div style="text-align:center; color:#fb7185; padding:20px 10px; line-height:1.5;">
                         まだ記録がありません<br>
@@ -1309,11 +1222,12 @@ function saveNameRecord() {
     }
 }
 
+// 💡 スポンサー募集画像に変更
 const sponsors = [
-    { image: "https://via.placeholder.com/320x50/333333/888888?text=Sponsor+1", url: "https://example.com" },
-    { image: "https://via.placeholder.com/320x50/333333/888888?text=Sponsor+2", url: "" },
-    { image: "https://via.placeholder.com/320x50/333333/888888?text=Sponsor+3", url: "https://example.com" },
-    { image: "https://via.placeholder.com/320x50/333333/888888?text=Sponsor+4", url: "" }
+    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
+    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
+    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
+    { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" }
 ];
 let currentSponsorIdx = 0;
 
@@ -1368,8 +1282,12 @@ window.addEventListener('load', () => {
         openMobileSettings();
     }
     
-    if(localStorage.getItem('block_puzzle_code') || localStorage.getItem('block_puzzle_save')) {
+    // 💡 AI追加：セーブデータがある時、心理学を応用してボタンを変化させる
+    if(localStorage.getItem('block_puzzle_save')) {
         document.getElementById('resume-btn').style.display = 'block';
+        document.getElementById('start-btn').innerText = "⚠️ 記録を消して最初から";
+        document.getElementById('start-btn').style.background = "#f43f5e";
+        document.getElementById('start-btn').style.boxShadow = "0 4px 0 #be123c";
     }
     
     loadRanking();
