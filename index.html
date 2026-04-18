@@ -33,7 +33,7 @@
 
         .score-penalty { background: none; -webkit-text-fill-color: #ff0000; text-shadow: 0 0 20px #ff0000; transform: scale(1.3); }
 
-        #left-panel { display: none; flex-direction: column; padding: 20px; background: #1e293b; border-radius: 12px; border: 3px solid #38bdf8; box-sizing: border-box; overflow-y: auto;}
+        #left-panel { display: none; flex-direction: column; padding: 20px; background: #1e293b; border-radius: 12px; border: 3px solid #38bdf8; box-sizing: border-box; overflow-y: auto; flex: 1;}
         
         #center-panel { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 10px; min-height: 0; width: 100%; box-sizing: border-box;}
         #canvas-wrapper { position: relative; height: 100%; aspect-ratio: 1/2; max-width: 100%; display: flex; justify-content: center; align-items: center;}
@@ -189,11 +189,9 @@
 
         #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,6,23,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
         
-        /* ランキング枠（スクロール対応＆「位」の改行防止） */
         #ranking-board { 
             flex: 1; 
             min-height: 150px;
-            max-height: 250px;
             overflow-y: auto; 
             -webkit-overflow-scrolling: touch;
             text-align: left; 
@@ -207,12 +205,10 @@
         #ranking-board::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 3px; }
         
         .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #334155;}
-        /* widthを広げ、white-spaceで改行を完全阻止 */
         .rank-pos { font-weight: bold; width: 70px; flex-shrink: 0; white-space: nowrap; }
         .rank-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 10px; color: #fff;}
         .rank-score { font-weight: bold; color: #4ade80; flex-shrink: 0; white-space: nowrap; }
 
-        /* スポンサー枠のレイアウト */
         #sponsor-container {
             flex: 0 0 60px;
             background: #000;
@@ -272,9 +268,6 @@
         <div id="left-panel">
             <h2 class="pc-title">ブロック計算パズル<br><span style="font-size:14px; color:#aaa;">グローバルモード</span></h2>
             
-            <button class="action-btn save-btn" id="resume-btn" onclick="executeLoad()" style="display:none;">▶️ 続きから遊ぶ</button>
-            <button class="action-btn save-btn" id="save-quit-btn" onclick="saveAndQuitGame()" style="display:none;">💾 セーブして終わる</button>
-
             <div class="setting-group">
                 <label>計算のレベル</label>
                 <select id="level">
@@ -316,7 +309,10 @@
                     <option value="10">10 (激ムズ)</option>
                 </select>
             </div>
-            <button class="action-btn" id="start-btn" onclick="handleStartClick(event)">さいしょから 遊ぶ</button>
+            
+            <button class="action-btn save-btn" id="resume-btn" onclick="executeLoad()" style="display:none; margin-top:10px;">▶️ 続きから遊ぶ</button>
+            <button class="action-btn" id="start-btn" onclick="handleStartClick(event)">ゲームをはじめる</button>
+            <button class="action-btn save-btn" id="save-quit-btn" onclick="saveAndQuitGame()" style="display:none;">💾 セーブして終わる</button>
             <button class="action-btn close-btn" id="close-settings-btn" onclick="closeMobileSettings()" style="display:none;">ゲームに戻る</button>
 
             <div id="ranking-board">
@@ -336,7 +332,7 @@
                 <div id="game-over-overlay" class="hidden">
                     <h2 style="color:#f43f5e; font-size:36px; margin:0;">ゲームオーバー</h2>
                     <p style="color:#fff; font-weight:bold;">ブロックが いっぱいになりました</p>
-                    <button class="action-btn" style="width:80%;" onclick="openMobileSettings()">設定にもどる</button>
+                    <button class="action-btn" style="width:80%;" onclick="openMobileSettings()">メニューにもどる</button>
                 </div>
             </div>
         </div>
@@ -397,7 +393,7 @@
     <div style="background:#1e293b; border:4px solid #4ade80; border-radius:12px; padding:30px; width:90%; max-width:400px; text-align:center;">
         <h2 style="color:#4ade80; margin-top:0;">セーブ完了！</h2>
         <p style="font-size:16px; color:#fff; line-height: 1.6;">現在の進行状況を保存しました。<br>次回は「続きから遊ぶ」を押すだけで<br>すぐに再開できます！</p>
-        <button class="action-btn" style="margin-top: 20px;" onclick="location.reload()">タイトルへ戻る</button>
+        <button class="action-btn" style="margin-top: 20px; background: #38bdf8; box-shadow: 0 4px 0 #0284c7; color:#000;" onclick="location.reload()">タイトルへ戻る</button>
     </div>
 </div>
 
@@ -412,6 +408,7 @@
 
 <script>
 let audioUnlocked = false;
+let silentOsc = null;
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function unlockAndWakeAudio() {
@@ -425,6 +422,15 @@ function unlockAndWakeAudio() {
             source.buffer = buffer;
             source.connect(audioCtx.destination);
             source.start(0);
+            
+            // iPhone完全対策：無音を永遠に流し続ける
+            silentOsc = audioCtx.createOscillator();
+            const silentGain = audioCtx.createGain();
+            silentGain.gain.value = 0; 
+            silentOsc.connect(silentGain);
+            silentGain.connect(audioCtx.destination);
+            silentOsc.start();
+            
             audioUnlocked = true;
         }
     } catch(e) {}
@@ -441,7 +447,6 @@ document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preven
 let lastTouchEnd = 0;
 document.addEventListener('touchend', e => { let now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now; }, { passive: false });
 
-// 👇 ここにあなたのFirebase設定を貼り付けます 👇
 const firebaseConfig = {
   apiKey: "AIzaSyDPMTQWtywKFLKHB4wNpCqLV2BsOJedFbc",
   authDomain: "mathtetris-b53e6.firebaseapp.com",
@@ -967,7 +972,6 @@ function collideAt(cx, cy, shape) {
     return false;
 }
 
-// 💡 1タッチで簡単セーブ（パスワード廃止）
 function saveLocalState() {
     if(isGameOver) { localStorage.removeItem('block_puzzle_save'); return; }
     const state = { board, score, currentPlayedLevel, currentSpeedLevel, piecesPlaced };
@@ -1047,7 +1051,6 @@ function dropOne() { if (canOperate && !isGameOver) { drop(); vibrate(5);} }
 function rotatePiece() { if (!canOperate || isGameOver) return; const newShape = currentPiece.shape[0].map((_, i) => currentPiece.shape.map(row => row[i]).reverse()); if (!collideAt(currentPiece.x, currentPiece.y, newShape)) { currentPiece.shape = newShape; update(); vibrate(10);} }
 function hardDrop() { if (!canOperate || isGameOver) return; while (!collideAt(currentPiece.x, currentPiece.y + 1, currentPiece.shape)) { currentPiece.y++; } canOperate = false; merge(); processChains(); vibrate(20);}
 
-// 💡 セーブ画面の変更
 function saveAndQuitGame() {
     if(isGameOver || board.length === 0) return;
     if(gameInterval) clearInterval(gameInterval);
@@ -1057,7 +1060,6 @@ function saveAndQuitGame() {
     closeMobileSettings();
 }
 
-// 💡 1ボタンで即復帰できるロードシステム
 function executeLoad() {
     const localSaved = localStorage.getItem('block_puzzle_save');
     if(localSaved) {
@@ -1090,9 +1092,7 @@ function executeLoad() {
     }
 }
 
-// 💡 スマホのもたつきを解消したスタートボタン
-function handleStartClick(e) {
-    if(e) e.preventDefault();
+function handleStartClick() {
     initAudio(); 
     closeMobileSettings();
     setTimeout(() => {
@@ -1135,8 +1135,7 @@ function gameOver() {
     localStorage.removeItem('block_puzzle_save');
     finalScoreToSave = score; checkRanking(finalScoreToSave);
     
-    // ゲームオーバー時はボタンを通常に戻す
-    document.getElementById('start-btn').innerText = "さいしょから 遊ぶ";
+    document.getElementById('start-btn').innerText = "ゲームをはじめる";
     document.getElementById('start-btn').style.background = "#a855f7";
     document.getElementById('start-btn').style.boxShadow = "0 4px 0 #7e22ce";
     document.getElementById('resume-btn').style.display = 'none';
@@ -1222,7 +1221,6 @@ function saveNameRecord() {
     }
 }
 
-// 💡 スポンサー募集画像に変更
 const sponsors = [
     { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
     { image: "https://via.placeholder.com/320x50/1e293b/facc15?text=スポンサー募集中！", url: "" },
@@ -1282,12 +1280,15 @@ window.addEventListener('load', () => {
         openMobileSettings();
     }
     
-    // 💡 AI追加：セーブデータがある時、心理学を応用してボタンを変化させる
     if(localStorage.getItem('block_puzzle_save')) {
         document.getElementById('resume-btn').style.display = 'block';
         document.getElementById('start-btn').innerText = "⚠️ 記録を消して最初から";
         document.getElementById('start-btn').style.background = "#f43f5e";
         document.getElementById('start-btn').style.boxShadow = "0 4px 0 #be123c";
+    } else {
+        document.getElementById('start-btn').innerText = "ゲームをはじめる";
+        document.getElementById('start-btn').style.background = "#a855f7";
+        document.getElementById('start-btn').style.boxShadow = "0 4px 0 #7e22ce";
     }
     
     loadRanking();
