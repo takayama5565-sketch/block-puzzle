@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ブロック計算パズル - スポンサー獲得版 -</title>
+    <title>ブロック計算パズル - 収益化完全版 -</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
@@ -187,13 +187,13 @@
             100% { opacity: 0; transform: translate(-50%, -60px) scale(1.2); } 
         }
 
-        #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,6,23,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
+        #game-over-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2,6,23,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 8px; z-index: 10; }
         
         #ranking-board { 
             display: flex;
             flex-direction: column;
             flex: 1 1 auto; 
-            min-height: 200px;
+            min-height: 200px; 
             text-align: left; 
             font-size: 14px; 
             margin-top: 10px; 
@@ -214,7 +214,6 @@
         .rank-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 10px; color: #fff;}
         .rank-score { font-weight: bold; color: #4ade80; flex-shrink: 0; white-space: nowrap; }
 
-        /* 💡 修正：スポンサー募集用の目立つデザイン枠 */
         #sponsor-container {
             flex: 0 0 60px;
             background: #000;
@@ -354,7 +353,10 @@
                 <div id="game-over-overlay" class="hidden">
                     <h2 style="color:#f43f5e; font-size:36px; margin:0;">ゲームオーバー</h2>
                     <p style="color:#fff; font-weight:bold;">ブロックが いっぱいになりました</p>
-                    <button class="action-btn" style="width:80%;" onclick="openMobileSettings()">メニューにもどる</button>
+                    
+                    <button class="action-btn" style="width:80%; background:#000; color:#fff; border:2px solid #333; box-shadow: 0 4px 0 #222;" onclick="shareScore()">𝕏 でスコアをシェア</button>
+                    
+                    <button class="action-btn" style="width:80%; margin-top:15px;" onclick="openMobileSettings()">メニューにもどる</button>
                 </div>
             </div>
         </div>
@@ -429,29 +431,34 @@
 </div>
 
 <script>
-// 💡 iPhone音消え問題：完全対策版（画面タッチのたびに強制電源ON）
+// 💡 iOS音消え問題・完全最終防衛システム（The Final Fix）
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let keepAliveOsc = null;
 
-function forceWakeAudio() {
+function ensureAudioAwake() {
     try {
         if (audioCtx && audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-        const buffer = audioCtx.createBuffer(1, 1, 22050);
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start(0);
+        // iPhoneを起こすための継続的な無音信号（負荷はゼロに等しい）
+        if (!keepAliveOsc) {
+            keepAliveOsc = audioCtx.createOscillator();
+            const silentNode = audioCtx.createGain();
+            silentNode.gain.value = 0; // 完全無音
+            keepAliveOsc.connect(silentNode);
+            silentNode.connect(audioCtx.destination);
+            keepAliveOsc.start();
+        }
     } catch(e) {}
 }
 
-document.body.addEventListener('touchstart', forceWakeAudio, { passive: true, capture: true });
-document.body.addEventListener('touchend', forceWakeAudio, { passive: true, capture: true });
-document.body.addEventListener('click', forceWakeAudio, { passive: true, capture: true });
-document.addEventListener('visibilitychange', () => { 
-    if(document.visibilityState === 'visible') forceWakeAudio(); 
+// 指が触れるたび、キーを押すたび、画面が戻るたびに「絶対に起きろ！」と命令を送る
+['touchstart', 'touchend', 'mousedown', 'keydown'].forEach(evt => {
+    document.addEventListener(evt, ensureAudioAwake, { capture: true, passive: true });
 });
-
+document.addEventListener('visibilitychange', () => { 
+    if(document.visibilityState === 'visible') ensureAudioAwake(); 
+});
 document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 let lastTouchEnd = 0;
 document.addEventListener('touchend', e => { let now = (new Date()).getTime(); if (now - lastTouchEnd <= 300) e.preventDefault(); lastTouchEnd = now; }, { passive: false });
@@ -521,7 +528,6 @@ const COLORS = [
 
 function isMobile() { return window.innerWidth < 800; }
 
-// 💡 チート対策：メニューを開いている時はパズルと計算を隠し、ゲームを完全に一時停止する
 let gameWasRunningBeforeMenu = false;
 
 function openMobileSettings() { 
@@ -532,7 +538,6 @@ function openMobileSettings() {
         if(!isGameOver) document.getElementById('close-settings-btn').style.display = 'block';
     }
     
-    // ゲーム進行の一時停止とモザイク処理
     if(!isGameOver) {
         document.getElementById('canvas-wrapper').style.opacity = '0.1';
         document.getElementById('math-problem').style.opacity = '0';
@@ -560,22 +565,17 @@ function closeMobileSettings() {
         panel.style.display = 'none';
     }
     
-    // ゲームの再開とモザイク解除
     if(!isGameOver) {
         document.getElementById('canvas-wrapper').style.opacity = '1';
         document.getElementById('math-problem').style.opacity = '1';
         
         if (isNaN(currentAnswer)) {
-            // パズルが落ちていた状態ならパズル再開
             if (gameWasRunningBeforeMenu) {
                 gameInterval = setInterval(drop, dropSpeed);
                 canOperate = true;
             }
         } else {
-            // 計算中ならタイマー再開
             if(timeLimitSec > 0) {
-                // 不公平にならないよう、止めていた時間分だけ開始時間をズラす処理も可能ですが
-                // シンプルにアニメーションだけ再開します
                 problemStartTime = Date.now() - (timeLimitSec * 1000 - parseInt(document.getElementById('timer-bar-fill').style.width || 100)/100 * timeLimitSec * 1000);
                 updateTimer();
             }
@@ -587,7 +587,6 @@ window.addEventListener('resize', () => {
     if(!isMobile()) {
         document.getElementById('left-panel').style.display = 'flex';
         document.getElementById('left-panel').classList.remove('mobile-modal');
-        // パソコンに切り替わった時はモザイク解除
         document.getElementById('canvas-wrapper').style.opacity = '1';
         document.getElementById('math-problem').style.opacity = '1';
         if(!isGameOver && isNaN(currentAnswer) && !gameInterval) {
@@ -615,6 +614,7 @@ function updateScoreDisplay() {
 function vibrate(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} }
 
 function playExplosion(comboCount, isBigBang = false) {
+    ensureAudioAwake();
     try {
         if (!audioCtx || audioCtx.state === 'suspended') return;
         const time = audioCtx.currentTime;
@@ -649,6 +649,7 @@ function playExplosion(comboCount, isBigBang = false) {
 }
 
 function playHeavyMissEffect() {
+    ensureAudioAwake();
     vibrate([100, 50, 100]); 
     const probBox = document.getElementById('problem-box');
     probBox.classList.add('error-shake');
@@ -672,6 +673,7 @@ function playHeavyMissEffect() {
 }
 
 function playSound(type) {
+    ensureAudioAwake();
     try {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
@@ -703,6 +705,7 @@ function updateInputDisplay() {
 
 function inputPad(val, e) {
     if(e) e.preventDefault();
+    ensureAudioAwake(); 
     if (canOperate || isGameOver) return;
     vibrate(10); 
     if (val === 'DEL') { currentInputStr = currentInputStr.slice(0, -1); } 
@@ -717,6 +720,7 @@ function inputPad(val, e) {
 
 document.getElementById('real-input-container').addEventListener('submit', (e) => {
     e.preventDefault();
+    ensureAudioAwake();
     currentInputStr = document.getElementById('math-answer-real').value;
     submitAnswer(e);
 });
@@ -727,8 +731,9 @@ document.addEventListener('keydown', (e) => {
     
     if (!isGameOver && document.getElementById('left-panel').style.display !== 'flex' && isMobile() === false || !isGameOver && !document.getElementById('left-panel').classList.contains('mobile-modal')) {
         if (!canOperate && !isMobile()) {
-            if (e.key === 'Enter') submitAnswer();
+            if (e.key === 'Enter') { ensureAudioAwake(); submitAnswer(); }
         } else if (canOperate) {
+            ensureAudioAwake();
             if (e.key === 'ArrowLeft') moveLeft();
             else if (e.key === 'ArrowRight') moveRight();
             else if (e.key === 'ArrowDown') dropOne();
@@ -949,6 +954,7 @@ function submitAnswer(e) {
 let actionTimer = null;
 function startAction(actionFunc, e, once = false) {
     if(e) e.preventDefault();
+    ensureAudioAwake();
     if (!canOperate || isGameOver) return;
     actionFunc();
     if(!once) { if(actionTimer) clearInterval(actionTimer); actionTimer = setInterval(actionFunc, 120); }
@@ -1127,7 +1133,7 @@ function saveAndQuitGame() {
 function executeLoad() {
     const localSaved = localStorage.getItem('block_puzzle_save');
     if(localSaved) {
-        forceWakeAudio();
+        ensureAudioAwake();
         const state = JSON.parse(localSaved);
         board = state.board || []; 
         score = state.score || 0; 
@@ -1149,7 +1155,6 @@ function executeLoad() {
         closeMobileSettings();
         if(gameInterval) clearInterval(gameInterval); 
         
-        // 💡 AI追加：再開時にいきなり落ちてこないように少しだけ待つ
         setTimeout(() => {
             spawnPiece(); 
             update();
@@ -1159,12 +1164,10 @@ function executeLoad() {
     }
 }
 
-// 💡 スタートボタンの処理を整理（パソコンでも携帯でも絶対に動くように修正）
 function handleStartClick(e, isNewGame) {
     if(e) e.preventDefault();
-    forceWakeAudio(); 
+    ensureAudioAwake(); 
     
-    // 最初から遊ぶ場合はセーブデータを消す
     if(isNewGame) {
         localStorage.removeItem('block_puzzle_save');
     }
@@ -1178,7 +1181,7 @@ function handleStartClick(e, isNewGame) {
     }, 50);
 }
 
-function startGame() {
+function startGame(forceNew = false) {
     board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     score = 0; combo = 0; isGameOver = false; nextPiece = null; problemCount = 0; piecesPlaced = 0; currentInputStr = ""; recentProblems = [];
     
@@ -1216,6 +1219,13 @@ function gameOver() {
     
     document.getElementById('continue-buttons').style.display = 'none';
     document.getElementById('first-time-buttons').style.display = 'block';
+}
+
+// 💡 𝕏（Twitter）でスコアをシェアしてプレイヤーを増やす機能
+function shareScore() {
+    const shareText = encodeURIComponent(`ブロック計算パズルで ${Number(score).toLocaleString()} 点を獲得しました！\nレベル: ${currentPlayedLevel}\n\n#ブロック計算パズル #脳トレ #プログラミング\n`);
+    const shareUrl = encodeURIComponent(window.location.href);
+    window.open(`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`, '_blank');
 }
 
 let cachedRankingHTML = '';
@@ -1298,12 +1308,12 @@ function saveNameRecord() {
     }
 }
 
-// 💡 修正：スポンサー募集用のリンク（★あなたのメールアドレスを下の your-email... の部分に入れてください）
+// 💡 修正：ご指定のメールアドレスへ直接つながる設定
 const sponsors = [
-    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" },
-    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" },
-    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" },
-    { isRecruit: true, url: "mailto:your-email@example.com?subject=【スポンサー応募】ブロック計算パズル" }
+    { isRecruit: true, url: "mailto:murotsuyoshi0603@gmail.com?subject=【スポンサー応募】ブロック計算パズル" },
+    { isRecruit: true, url: "mailto:murotsuyoshi0603@gmail.com?subject=【スポンサー応募】ブロック計算パズル" },
+    { isRecruit: true, url: "mailto:murotsuyoshi0603@gmail.com?subject=【スポンサー応募】ブロック計算パズル" },
+    { isRecruit: true, url: "mailto:murotsuyoshi0603@gmail.com?subject=【スポンサー応募】ブロック計算パズル" }
 ];
 let currentSponsorIdx = 0;
 
@@ -1315,14 +1325,12 @@ function updateSponsors() {
     for (let i = 0; i < slots; i++) {
         let sp = sponsors[(currentSponsorIdx + i) % sponsors.length];
         
-        // 💡 リンクボタン（aタグ）として作成し、クリック可能にする
         let el = document.createElement('a');
         el.className = 'sponsor-banner';
         el.href = sp.url;
         el.target = "_blank";
         
         if (sp.isRecruit) {
-            // 💡 目立つ「スポンサー募集」の専用デザイン
             el.innerHTML = `
                 <div class="sponsor-recruit">
                     <span class="main-text">🌟 スポンサー大募集！</span>
@@ -1341,7 +1349,6 @@ function updateSponsors() {
             el.appendChild(img);
         }
         
-        // アナリティクスへクリック数を記録
         el.addEventListener('click', () => {
             try {
                 if(typeof firebase !== 'undefined' && firebase.analytics) {
