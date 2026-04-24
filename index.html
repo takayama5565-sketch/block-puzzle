@@ -42,7 +42,7 @@
         #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
         /* =========================================
-           2. スマホ用パネル設計
+           2. パネル設計（スマホ基準）
         ========================================= */
         #left-sidebar {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -62,7 +62,7 @@
             border: 3px solid var(--accent-blue); border-radius: 8px; box-shadow: 0 0 15px rgba(56,189,248,0.2);
             background-color: #020617; overflow: hidden;
         }
-        .screen-shake { animation: shakeHard 0.2s cubic-bezier(.36,.07,.19,.97) both; }
+        .screen-shake { animation: shakeHard 0.3s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shakeHard { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-5px, 5px); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-5px, -5px); } 80% { transform: translate(5px, 5px); } }
 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -131,20 +131,29 @@
         .error-shake { animation: errShake 0.4s cubic-bezier(.36,.07,.19,.97) both; background-color: #e11d48 !important; border-color: #fff !important;}
         @keyframes errShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
         
-        /* 💡 邪魔にならない超高速・巨大メガポップアップ（0.4秒で消滅） */
+        /* 💡 メガポップアップ（スピードと快感の両立） */
         .mega-pop { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.1); 
             opacity: 0; pointer-events: none; z-index: 10000; text-align: center; white-space: nowrap; 
             text-shadow: 0 0 20px #000, 0 0 50px #000, 6px 6px 0 #000; 
         }
-        .mega-pop.play-anim { animation: popAnim 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        /* スピードプレイ用：0.25秒で一瞬で消える */
+        .mega-pop.play-fast { animation: popFast 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        /* ライン消去快感用：ゆっくり0.8秒見せる */
+        .mega-pop.play-slow { animation: popSlow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
         .mega-pop .pop-main { font-size: clamp(60px, 18vw, 150px); font-weight: 900; font-style: italic; display: block; letter-spacing: 2px; -webkit-text-stroke: 3px #fff;}
         .mega-pop .pop-sub { font-size: clamp(40px, 12vw, 100px); font-weight: 900; display: block; margin-top: 5px; -webkit-text-stroke: 2px #fff;}
         
-        @keyframes popAnim { 
+        @keyframes popFast { 
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); } 
-            25% { opacity: 1; transform: translate(-50%, -60px) scale(1.5) rotate(10deg); } 
-            70% { opacity: 1; transform: translate(-50%, -75px) scale(1.3) rotate(0deg); filter: blur(0px); } 
+            50% { opacity: 1; transform: translate(-50%, -60px) scale(1.5) rotate(10deg); } 
+            100% { opacity: 0; transform: translate(-50%, -100px) scale(2.0); filter: blur(5px); } 
+        }
+        @keyframes popSlow { 
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-10deg); } 
+            15% { opacity: 1; transform: translate(-50%, -60px) scale(1.5) rotate(5deg); } 
+            70% { opacity: 1; transform: translate(-50%, -65px) scale(1.2) rotate(0deg); filter: blur(0px); } 
             100% { opacity: 0; transform: translate(-50%, -100px) scale(2.0); filter: blur(10px); } 
         }
 
@@ -159,7 +168,7 @@
         .sponsor-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;}
 
         /* =========================================
-           4. PC用強固なGridレイアウト
+           4. PC用レイアウト（強固なGrid設計）
         ========================================= */
         @media (min-width: 800px) {
             #mobile-header { display: none !important; }
@@ -179,10 +188,9 @@
             #right-sidebar { position: relative !important; width: 100% !important; display: flex !important; background: var(--bg-panel) !important; border: 3px solid var(--accent-pink) !important; border-radius: 12px !important; border-top: 3px solid var(--accent-pink) !important; padding: 20px !important;}
             
             #numpad, #puzzle-ui { display: none !important; }
-            .pc-score-display { display: block !important; text-align: center; margin-bottom: 10px;}
+            .pc-score-display { display: block !important; text-align: center; margin-bottom: 30px;}
             .pc-score-display span { font-size: 42px; display: block; color: var(--accent-gold); font-weight: 900; line-height: 1.2; text-shadow: 0 0 15px rgba(250,204,21,0.4);}
             
-            /* 💡 プロの視点：スクショ映えのために現在レベルを常時表示 */
             .pc-level-display { text-align: center; font-size: 14px; font-weight: bold; color: var(--accent-blue); margin-bottom: 20px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px;}
 
             .math-container { flex-direction: column; padding: 30px 10px; gap: 20px; border-width: 4px;}
@@ -218,8 +226,8 @@
             <div class="setting-box">
                 <label>計算のレベル (即時変更)</label>
                 <select id="config-level">
-                    <option value="1">Lv1: 1桁の 足し算</option>
-                    <option value="2">Lv2: 1桁の 引き算</option>
+                    <option value="1">Lv1: 1桁の 足し算 (例: 3+5)</option>
+                    <option value="2">Lv2: 1桁の 引き算 (例: 8-3)</option>
                     <option value="3">Lv3: 1桁の かけ算 (九九)</option>
                     <option value="4">Lv4: 平方計算 (11〜19の2乗)</option>
                     <option value="5">Lv5: 2桁 × 1桁の かけ算</option>
@@ -567,11 +575,15 @@ const UI = {
     openTutorial() { document.getElementById('overlay-tutorial').classList.add('is-active'); },
     closeTutorial() { document.getElementById('overlay-tutorial').classList.remove('is-active'); },
     
-    showMegaPop(mainText, subText, color) {
+    // 💡 邪魔にならない超高速・巨大メガポップアップ切り替え機能
+    showMegaPop(mainText, subText, color, speedClass = 'play-fast') {
         const wrap = document.getElementById('mega-pop-wrapper');
         document.getElementById('mega-pop-main').innerText = mainText; document.getElementById('mega-pop-main').style.color = color;
         document.getElementById('mega-pop-sub').innerText = subText; document.getElementById('mega-pop-sub').style.color = color;
-        wrap.classList.remove('play-anim'); void wrap.offsetWidth; wrap.classList.add('play-anim');
+        
+        wrap.classList.remove('play-fast', 'play-slow');
+        void wrap.offsetWidth; // アニメーションリセット
+        wrap.classList.add(speedClass);
     },
 
     updateScore(val) {
@@ -586,7 +598,7 @@ const UI = {
 window.addEventListener('resize', () => {
     if(window.innerWidth >= 800) document.getElementById('left-sidebar').classList.remove('is-active');
     else if (UI.state === 'INIT' || UI.state === 'PAUSED' || UI.state === 'GAMEOVER') document.getElementById('left-sidebar').classList.add('is-active');
-    UI.update(); // PCとスマホでボタンの表示を切り替えるため
+    UI.update(); 
     updateSponsors();
 });
 
@@ -778,7 +790,7 @@ const Game = {
         
         let lv = parseInt(document.getElementById('config-level').value);
         
-        // 💡 PC版のレベル表記を更新
+        // PC版のレベル表記を更新
         let lvText = document.getElementById('config-level').options[document.getElementById('config-level').selectedIndex].text;
         document.getElementById('pc-current-level').innerText = `プレイ中: ${lvText}`;
 
@@ -848,10 +860,10 @@ const Game = {
         
         if(this.mathCombo >= 2) {
             document.getElementById('combo-msg-text').innerText = `🔥 ${this.mathCombo} COMBO! (x${multi})`;
-            UI.showMegaPop(`${this.mathCombo} COMBO!`, `+${pts}`, "var(--accent-gold)");
+            UI.showMegaPop(`${this.mathCombo} COMBO!`, `+${pts}`, "var(--accent-gold)", "play-fast");
         } else {
             document.getElementById('combo-msg-text').innerText = "";
-            UI.showMegaPop("GREAT!", `+${pts}`, "var(--accent-green)");
+            UI.showMegaPop("GREAT!", `+${pts}`, "var(--accent-green)", "play-fast");
         }
 
         this.hideNext = false;
@@ -877,7 +889,7 @@ const Game = {
         const box = document.getElementById('math-box');
         box.classList.remove('error-shake'); void box.offsetWidth; box.classList.add('error-shake');
         
-        UI.showMegaPop(isTimeout ? "TIME UP!" : "MISS...", `-${pen}`, "var(--accent-pink)");
+        UI.showMegaPop(isTimeout ? "TIME UP!" : "MISS...", `-${pen}`, "var(--accent-pink)", "play-fast");
         
         this.hideNext = true; CanvasSys.renderNext(this.nxtPiece, this.hideNext);
         document.getElementById('math-status-msg').innerText = "ペナルティ発生"; document.getElementById('math-status-msg').style.color = "var(--accent-pink)";
@@ -921,19 +933,20 @@ const Game = {
         
         Sys.storageSet('block_puzzle_save', JSON.stringify({ board: this.board, score: this.score, level: document.getElementById('config-level').value, speed: document.getElementById('config-speed').value }));
         
-        // 💡 順番に連鎖していく新しいブロック破壊システムを呼び出す
-        this.processChains().then(() => {
-            this.generateProblem(); // すべて終わったら次の問題へ
+        // 💡 順番に連鎖していく新しいブロック破壊システムを呼び出す（エラー時はfinallyで必ず問題を出す）
+        this.processChains().catch(e => console.error(e)).finally(() => {
+            this.generateProblem(); // 💡 全て終わったら「必ず」次の計算問題へ！
         });
     },
 
     // 💡 ユーザー熱狂：ゆっくり光って順番に壊れていく「快感」連鎖システム
     async processChains() {
         let lineCombo = 0;
+        let clearedLinesTotal = 0;
         
         while(true) {
             let linesToClear = [];
-            // 揃っている行を探す
+            // 揃っている行を下から探す
             for (let r = 17; r >= 0; r--) {
                 let isFull = true;
                 for (let c = 0; c < 9; c++) {
@@ -942,7 +955,7 @@ const Game = {
                 if (isFull) linesToClear.push(r);
             }
             
-            // 揃っている行がなくなったらループ終了
+            // 揃っている行がなくなったらループ完全終了
             if (linesToClear.length === 0) break;
             
             // 💡 一番下の行を1つだけピックアップして処理する
@@ -950,7 +963,7 @@ const Game = {
 
             // 【快感演出 1】消える前に一瞬「真っ白」に発光させる
             for (let c = 0; c < 9; c++) {
-                this.board[targetRow][c] = 16; // 16 = ホワイト（光る）
+                this.board[targetRow][c] = 16; 
             }
             CanvasSys.renderAll(this.board, null);
 
@@ -962,7 +975,7 @@ const Game = {
                 CanvasSys.addParticles(c, targetRow, CanvasSys.COLORS[16], false);
             }
 
-            // 行を削除し、一番上に空の行を追加する
+            // 💡 行を削除し、一番上に空の行を追加する（テトリスの重力落下）
             this.board.splice(targetRow, 1);
             this.board.unshift(Array(9).fill(0));
             CanvasSys.renderAll(this.board, null);
@@ -980,16 +993,33 @@ const Game = {
             const cw = document.getElementById('canvas-wrapper');
             cw.classList.remove('screen-shake'); void cw.offsetWidth; cw.classList.add('screen-shake');
             
-            UI.showMegaPop("CLEAR!", `+${pts}`, "var(--accent-blue)");
+            // 💡 ライン消去のポップはゆっくり見せる
+            UI.showMegaPop("CLEAR!", `+${pts}`, "var(--accent-blue)", "play-slow");
 
             lineCombo++;
+            clearedLinesTotal++;
             
-            // 次の行へ行く前に少し待つ
             await new Promise(res => setTimeout(res, 200)); 
+
+            // 💡 さらに空いた隙間があれば、浮いているブロックを重力で詰める（ぷよぷよ式落下）
+            for (let c = 0; c < 9; c++) {
+                let emp = 17;
+                for (let r = 17; r >= 0; r--) {
+                    if (this.board[r][c] !== 0) {
+                        if (r !== emp) {
+                            this.board[emp][c] = this.board[r][c];
+                            this.board[r][c] = 0;
+                        }
+                        emp--;
+                    }
+                }
+            }
+            CanvasSys.renderAll(this.board, null);
+            await new Promise(res => setTimeout(res, 200));
         }
 
-        if (lineCombo > 1) {
-            document.getElementById('combo-display').innerText = `🔥 ${lineCombo} LINES COMBO!`;
+        if (clearedLinesTotal > 1) {
+            document.getElementById('combo-display').innerText = `🔥 ${clearedLinesTotal} LINES COMBO!`;
         }
     },
 
@@ -1038,7 +1068,6 @@ document.getElementById('config-speed').addEventListener('change', () => {
         Game.interval = setInterval(() => Game.drop(), Game.speedMs);
     }
 });
-
 
 // 9. ブロック操作アクション
 const Action = {
