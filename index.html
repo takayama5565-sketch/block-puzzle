@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ブロック計算パズル - ドーパミン特化版 -</title>
+    <title>ブロック計算パズル - 最終リリース版 -</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
@@ -42,7 +42,7 @@
         #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
         /* =========================================
-           2. パネル設計（スマホ基準）
+           2. スマホ用パネル設計
         ========================================= */
         #left-sidebar {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -60,11 +60,11 @@
         #canvas-wrapper {
             position: relative; height: 100%; aspect-ratio: 1/2; max-width: 100%;
             border: 3px solid var(--accent-blue); border-radius: 8px; box-shadow: 0 0 15px rgba(56,189,248,0.2);
-            background-color: #020617; overflow: hidden; transition: transform 0.1s;
+            background-color: #020617; overflow: hidden;
         }
-        /* ビックバン時の画面揺れ用 */
+        /* 💡 画面の揺れエフェクト */
         .screen-shake { animation: shakeHard 0.3s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shakeHard { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 20% { transform: translate(-10px, 10px) rotate(-2deg); } 40% { transform: translate(10px, -10px) rotate(2deg); } 60% { transform: translate(-10px, -10px) rotate(-2deg); } 80% { transform: translate(10px, 10px) rotate(2deg); } }
+        @keyframes shakeHard { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-5px, 5px); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-5px, -5px); } 80% { transform: translate(5px, 5px); } }
 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         #particleCanvas { z-index: 5; pointer-events: none; }
@@ -127,28 +127,26 @@
         .rank-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
         .rank-score { font-weight: bold; color: var(--accent-green); white-space: nowrap;}
 
-        /* アニメーション */
+        /* エフェクト */
         .score-pop { transform: scale(1.4); }
         .error-shake { animation: errShake 0.4s cubic-bezier(.36,.07,.19,.97) both; background-color: #e11d48 !important; border-color: #fff !important;}
         @keyframes errShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
         
-        /* 💡 さらに巨大化したメガ・ポップアップ */
+        /* 💡 邪魔にならない超高速・巨大メガポップアップ（0.6秒で消える） */
         .mega-pop { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.1); 
             opacity: 0; pointer-events: none; z-index: 10000; text-align: center; white-space: nowrap; 
-            text-shadow: 0 0 20px #000, 0 0 50px #000, 6px 6px 0 #000; 
+            text-shadow: 0 0 20px #000, 0 0 40px #000, 4px 4px 0 #000; 
         }
-        .mega-pop.play-anim { animation: popAnim 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        /* 画面からはみ出すレベルの巨大文字 */
-        .mega-pop .pop-main { font-size: clamp(60px, 18vw, 150px); font-weight: 900; font-style: italic; display: block; letter-spacing: 2px; -webkit-text-stroke: 3px #fff;}
-        .mega-pop .pop-sub { font-size: clamp(40px, 12vw, 100px); font-weight: 900; display: block; margin-top: 5px; -webkit-text-stroke: 2px #fff;}
+        .mega-pop.play-anim { animation: popAnim 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .mega-pop .pop-main { font-size: clamp(60px, 15vw, 120px); font-weight: 900; font-style: italic; display: block; letter-spacing: 2px; -webkit-text-stroke: 2px #fff;}
+        .mega-pop .pop-sub { font-size: clamp(40px, 10vw, 80px); font-weight: 900; display: block; margin-top: 0px; -webkit-text-stroke: 1px #fff;}
         
         @keyframes popAnim { 
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); } 
-            15% { opacity: 1; transform: translate(-50%, -60px) scale(1.5) rotate(10deg); } 
-            30% { opacity: 1; transform: translate(-50%, -65px) scale(1.2) rotate(-5deg); } 
-            70% { opacity: 1; transform: translate(-50%, -75px) scale(1.3) rotate(0deg); filter: blur(0px); } 
-            100% { opacity: 0; transform: translate(-50%, -150px) scale(2.5); filter: blur(15px); } 
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-10deg); } 
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(5deg); } 
+            70% { opacity: 1; transform: translate(-50%, -60px) scale(1.0) rotate(0deg); filter: blur(0px); } 
+            100% { opacity: 0; transform: translate(-50%, -100px) scale(1.8); filter: blur(10px); } 
         }
 
         /* オーバーレイ */
@@ -162,7 +160,7 @@
         .sponsor-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;}
 
         /* =========================================
-           4. PC用レイアウト（強固なGrid設計）
+           4. PC用強固なGridレイアウト
         ========================================= */
         @media (min-width: 800px) {
             #mobile-header { display: none !important; }
@@ -216,8 +214,8 @@
             <div class="setting-box">
                 <label>計算のレベル</label>
                 <select id="config-level">
-                    <option value="1">Lv1: 1桁の たし算</option>
-                    <option value="2">Lv2: 1桁の ひき算</option>
+                    <option value="1">Lv1: 1桁の 足し算 (例: 3+5)</option>
+                    <option value="2">Lv2: 1桁の 引き算 (例: 8-3)</option>
                     <option value="3">Lv3: 1桁の かけ算 (九九)</option>
                     <option value="4">Lv4: 平方計算 (11〜19の2乗)</option>
                     <option value="5">Lv5: 2桁 × 1桁の かけ算</option>
@@ -375,14 +373,12 @@
 
 <script>
 /* ==========================================================================
-   絶対にエラーを起こさない・第三者検証済みのJSコード
+   絶対にエラーを起こさない・純粋なテトリス＆計算ロジック
 ========================================================================== */
 
-// 1. 安全なシステムユーティリティ
+// 1. 安全なストレージ
 const Sys = {
-    vibrate(ms) {
-        try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e) {}
-    },
+    vibrate(ms) { try { if(navigator.vibrate) navigator.vibrate(ms); } catch(e) {} },
     storageGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
     storageSet(key, val) { try { localStorage.setItem(key, val); } catch(e) {} },
     storageRemove(key) { try { localStorage.removeItem(key); } catch(e) {} }
@@ -405,7 +401,7 @@ try {
     if (typeof firebase.analytics === 'function') firebase.analytics();
 } catch(e) {}
 
-// 3. 音声システム（ビッグバンサウンド完全対応）
+// 3. オーディオシステム（ピッチ上昇機能搭載）
 const AudioSys = {
     ctx: new (window.AudioContext || window.webkitAudioContext)(),
     keepAlive: null,
@@ -447,7 +443,7 @@ const AudioSys = {
             btn.style.background = "#475569"; btn.style.borderColor = "#334155";
         }
     },
-    play(type, comboVal = 0) {
+    play(type, lineComboIndex = 0) {
         if(this.isMuted) return;
         this.wakeUp();
         try {
@@ -471,9 +467,10 @@ const AudioSys = {
                 gain.gain.setValueAtTime(0.8, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
                 osc.start(); osc.stop(time + 0.5);
             } else if (type === 'bigbang') {
-                // 💡 破壊のたびにピッチが上がる重厚なサウンド
-                const baseFreq = 100 + (comboVal * 40); 
-                const noiseFreq = 1500 + (comboVal * 500);
+                // 💡 連鎖するごとに音程（ピッチ）がどんどん高くなる重厚な音
+                const pitchUp = lineComboIndex * 60;
+                const baseFreq = 100 + pitchUp; 
+                const noiseFreq = 1500 + (lineComboIndex * 400);
                 
                 const subOsc = this.ctx.createOscillator(); const subGain = this.ctx.createGain();
                 subOsc.type = 'sine'; subOsc.frequency.setValueAtTime(baseFreq, time); subOsc.frequency.exponentialRampToValueAtTime(10, time + 0.8);
@@ -489,7 +486,7 @@ const AudioSys = {
                 const filter = this.ctx.createBiquadFilter(); filter.type = 'lowpass';
                 filter.frequency.setValueAtTime(noiseFreq, time); filter.frequency.exponentialRampToValueAtTime(20, time + 0.8);
                 
-                const noiseGain = this.ctx.createGain(); noiseGain.gain.setValueAtTime(1.5 + (comboVal * 0.2), time); noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.8);
+                const noiseGain = this.ctx.createGain(); noiseGain.gain.setValueAtTime(1.5, time); noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.8);
                 
                 noise.connect(filter); filter.connect(noiseGain); noiseGain.connect(this.ctx.destination);
                 subOsc.start(time); subOsc.stop(time + 0.8); noise.start(time);
@@ -525,10 +522,16 @@ const UI = {
             if(window.innerWidth >= 800) {
                 document.getElementById('math-answer-real').disabled = false;
                 document.getElementById('answer-btn-real').disabled = false;
-                setTimeout(() => document.getElementById('math-answer-real').focus(), 100);
+                setTimeout(() => document.getElementById('math-answer-real').focus(), 50);
             }
         } else if (this.state === 'TETRIS') {
             document.getElementById('puzzle-ui').style.display = 'flex';
+            // 💡 PCバグ修正：テトリス開始時に強制的にフォーカスを外してキーボード操作を有効化！
+            if(window.innerWidth >= 800) {
+                document.getElementById('math-answer-real').blur();
+                document.getElementById('answer-btn-real').blur();
+                window.focus();
+            }
         }
     },
     
@@ -536,14 +539,12 @@ const UI = {
         if(this.state === 'MATH' || this.state === 'TETRIS') Game.pause();
         if(window.innerWidth < 800) document.getElementById('left-sidebar').classList.add('is-active');
     },
-    
     closeMenu() {
         if(this.state === 'PAUSED') {
             document.getElementById('left-sidebar').classList.remove('is-active');
             Game.resume();
         }
     },
-
     openTutorial() { document.getElementById('overlay-tutorial').classList.add('is-active'); },
     closeTutorial() { document.getElementById('overlay-tutorial').classList.remove('is-active'); },
     
@@ -569,7 +570,7 @@ window.addEventListener('resize', () => {
     updateSponsors();
 });
 
-// 5. 計算入力（PCのキーボードバグ完全回避）
+// 5. 計算入力
 const MathInput = {
     currentStr: "", answer: NaN,
     
@@ -590,7 +591,7 @@ const MathInput = {
     submitPC(e) {
         if(e) e.preventDefault();
         
-        // 💡 PCバグの元凶をここで完全シャットアウト！
+        // 💡 入力後のカーソル居座りを強制排除
         const active = document.activeElement;
         if(active) active.blur();
         window.focus();
@@ -606,26 +607,39 @@ const MathInput = {
     }
 };
 
+document.addEventListener('keydown', (e) => {
+    if (UI.state !== 'MATH') return;
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault(); 
+    if (!isNaN(MathInput.answer)) {
+        if(e.key >= '0' && e.key <= '9' || e.key === '-' || e.key === '.') MathInput.add(e.key);
+        else if(e.key === 'Backspace') MathInput.del();
+        else if(e.key === 'Enter') MathInput.submitPC();
+    }
+});
+
 // 6. 描画システム
 const CanvasSys = {
     canvas: document.getElementById('gameCanvas'), ctx: document.getElementById('gameCanvas').getContext('2d'),
     nextCtx: document.getElementById('nextCanvas').getContext('2d'), pCtx: document.getElementById('particleCanvas').getContext('2d'),
     particles: [],
+    
     COLORS: [ null, '#ef4444', '#06b6d4', '#22c55e', '#f97316', '#eab308', '#3b82f6', '#d946ef', '#a855f7', '#14b8a6', '#84cc16', '#f43f5e', '#10b981', '#6366f1', '#fff', '#334155' ],
-    SHAPES: [ [], [[1,1,1,1]], [[2,2],[2,2]], [[0,3,3],[3,3,0]], [[4,4,0],[0,4,4]], [[5,0,0],[5,5,5]], [[0,0,6],[6,6,6]], [[0,7,0],[7,7,7]], [[8]], [[9,9]], [[10,0],[10,10]], [[11,11,11]], [[0,12,0],[12,12,12],[0,12,0]], [[13,0,13],[13,13,13]] ],
+    SHAPES: [ [], [[1,1,1,1]], [[2,2],[2,2]], [[0,3,3],[3,3,0]], [[4,4,0],[0,4,4]], [[5,0,0],[5,5,5]], [[0,0,6],[6,6,6]], [[0,7,0],[7,7,7]] ],
     
     drawSquare(ctx, x, y, type, size = 30) {
         ctx.fillStyle = this.COLORS[type]; ctx.fillRect(x * size, y * size, size, size);
         ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 1; ctx.strokeRect(x * size, y * size, size, size);
         ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x * size + 2, y * size + 2, size - 4, 3);
-        if(size < 15) return;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        if (type === 14) { ctx.fillStyle = '#fff'; ctx.font = '21px Arial'; ctx.fillText('★', x*size+size/2, y*size+size/2+2); } 
-        else if (type === 15) { ctx.fillStyle = '#fff'; ctx.font = '24px Arial'; ctx.fillText('✖', x*size+size/2, y*size+size/2+2); } 
     },
     
     renderAll(board, curPiece) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // 💡 背景にうっすらグリッド線を描画（遊びやすく）
+        this.ctx.strokeStyle = 'rgba(255,255,255,0.05)'; this.ctx.lineWidth = 1;
+        for(let c=1; c<9; c++) { this.ctx.beginPath(); this.ctx.moveTo(c*30, 0); this.ctx.lineTo(c*30, 540); this.ctx.stroke(); }
+        for(let r=1; r<18; r++) { this.ctx.beginPath(); this.ctx.moveTo(0, r*30); this.ctx.lineTo(270, r*30); this.ctx.stroke(); }
+
         for(let r=0; r<18; r++) { for(let c=0; c<9; c++) { if(board[r][c]) this.drawSquare(this.ctx, c, r, board[r][c]); } }
         if(curPiece && UI.state === 'TETRIS') {
             let ghostY = curPiece.y;
@@ -666,7 +680,7 @@ const CanvasSys = {
 };
 requestAnimationFrame(() => CanvasSys.animParticles());
 
-// 7. ゲームエンジン
+// 7. ゲームエンジン（純粋テトリス＋数学）
 const Game = {
     board: [], score: 0, mathCombo: 0,
     interval: null, speedMs: 1000, speedLevel: 5,
@@ -757,9 +771,9 @@ const Game = {
         if(lv === 16) lv = Math.floor(Math.random() * 15) + 1;
         
         switch(lv) {
-            case 1: // 💡 レベル1: 1桁の足し算のみ
+            case 1: // 💡 Lv1: 1桁の足し算のみ
                 n1=Math.floor(Math.random()*9)+1; n2=Math.floor(Math.random()*9)+1; ans=n1+n2; pStr=`${n1} ＋ ${n2} = ?`; break;
-            case 2: // 💡 レベル2: 1桁の引き算のみ（絶対にマイナスにならない）
+            case 2: // 💡 Lv2: 1桁の引き算のみ（必ずプラスになる）
                 let a=Math.floor(Math.random()*9)+1; let b=Math.floor(Math.random()*9)+1; n1=Math.max(a,b); n2=Math.min(a,b); ans=n1-n2; pStr=`${n1} － ${n2} = ?`; break;
             case 3: n1=Math.floor(Math.random()*9)+1; n2=Math.floor(Math.random()*9)+1; ans=n1*n2; pStr=`${n1} × ${n2} = ?`; break;
             case 4: n1=Math.floor(Math.random()*9)+11; ans=n1*n1; pStr=`${n1}² = ?`; break;
@@ -858,18 +872,17 @@ const Game = {
     },
 
     genPiece() {
-        const base = CanvasSys.SHAPES[Math.floor(Math.random() * 13) + 1]; 
-        let type; const rand = Math.random();
-        if (rand < 1/30) type = 15; else if (rand < 1/30 + 1/40) type = 14; else type = Math.floor(Math.random() * 13) + 1; 
-        return { shape: base, x: 4, y: 0, type: type }; 
+        const base = CanvasSys.SHAPES[Math.floor(Math.random() * 7) + 1]; 
+        return { shape: base, x: 4, y: 0, type: Math.floor(Math.random() * 7) + 1 }; 
     },
 
+    // 💡 完璧なテトリス当たり判定
     collide(cx, cy, shape) {
         for (let y = 0; y < shape.length; y++) {
             for (let x = 0; x < shape[y].length; x++) {
                 if (shape[y][x]) {
                     let nx = cx + x; let ny = cy + y;
-                    if (nx < 0 || nx >= 9 || ny >= 18 || (ny >= 0 && this.board[ny][nx])) return true;
+                    if (nx < 0 || nx >= 9 || ny >= 18 || (ny >= 0 && this.board[ny][nx] !== 0)) return true;
                 }
             }
         }
@@ -893,95 +906,61 @@ const Game = {
         
         Sys.storageSet('block_puzzle_save', JSON.stringify({ board: this.board, score: this.score, level: document.getElementById('config-level').value, speed: document.getElementById('config-speed').value }));
         
-        // 💡 順番に連鎖していく新しいブロック破壊システムを呼び出す
         this.processChains().then(() => {
-            this.generateProblem(); // すべて終わったら次の問題へ
+            this.generateProblem(); // 💡 全て終わったら確実に次の計算問題へ！
         });
     },
 
-    // 💡 ユーザー熱狂：順番に壊れていく連鎖システム
+    // 💡 【重要】バグを完全排除した「1列ずつ破壊＆音程アップ」ロジック
     async processChains() {
         let lineCombo = 0;
         
         while(true) {
-            let lines = [];
-            // 揃っている行を探す（下から上へ）
+            let linesToClear = [];
+            // 下から上へ走査し、揃っている行を「すべて」見つける
             for (let r = 17; r >= 0; r--) {
                 let isFull = true;
                 for (let c = 0; c < 9; c++) {
-                    if (!this.board[r][c]) { isFull = false; break; }
+                    if (this.board[r][c] === 0) { isFull = false; break; }
                 }
-                if (isFull) lines.push(r);
+                if (isFull) linesToClear.push(r);
             }
             
-            // 揃っている行がなくなったらループ終了
-            if (lines.length === 0) break;
+            if (linesToClear.length === 0) break; // 揃っている行がなくなったら終了
             
-            // 💡 一番下の行から「1行ずつ」処理する
-            let targetRow = lines[0]; 
-            let hasGold = this.board[targetRow].includes(14);
-            let clearRows = new Set([targetRow]);
-            
-            if (hasGold) {
-                for(let r = Math.max(0, targetRow - 2); r <= Math.min(17, targetRow + 2); r++) clearRows.add(r);
+            // 💡 一番下の行を1つだけピックアップして処理する
+            let targetRow = linesToClear[0]; 
+
+            // パーティクル演出
+            for (let c = 0; c < 9; c++) {
+                CanvasSys.addParticles(c, targetRow, CanvasSys.COLORS[this.board[targetRow][c]] || '#fff', true);
             }
 
-            let blackDestroyed = 0;
-            clearRows.forEach(r => {
-                for (let c = 0; c < 9; c++) {
-                    if (this.board[r][c] !== 0) {
-                        CanvasSys.addParticles(c, r, CanvasSys.COLORS[this.board[r][c]] || '#fff', hasGold);
-                        if (this.board[r][c] === 15) blackDestroyed++;
-                        this.board[r][c] = 0;
-                    }
-                }
-            });
+            // 💡 配列からその行を削除し、一番上に空の行を追加する（純粋なテトリスロジック）
+            this.board.splice(targetRow, 1);
+            this.board.unshift(Array(9).fill(0));
 
             CanvasSys.renderAll(this.board, null);
 
             // スコアと音程の計算
-            let pts = clearRows.size * 100 * this.speedLevel * (lineCombo + 1);
-            if (hasGold) pts *= 2;
-            if (blackDestroyed > 0) pts += blackDestroyed * 1000;
+            let pts = 100 * this.speedLevel * (lineCombo + 1);
             this.score += pts;
             UI.updateScore(this.score);
 
             // 💡 ピッチが上がっていくド派手なビッグバンサウンド
             AudioSys.play('bigbang', lineCombo);
-            Sys.vibrate(100);
+            Sys.vibrate([100]);
             
             // 画面を揺らす
             const cw = document.getElementById('canvas-wrapper');
             cw.classList.remove('screen-shake'); void cw.offsetWidth; cw.classList.add('screen-shake');
             
-            UI.showMegaPop(hasGold ? "SUPER BOMB!!" : "CLEAR!", `+${pts}`, hasGold ? "var(--accent-gold)" : "var(--accent-blue)");
+            UI.showMegaPop("CLEAR!", `+${pts}`, "var(--accent-blue)");
 
             lineCombo++;
             
-            // ブロックが弾ける時間を少し待つ
-            await new Promise(res => setTimeout(res, 350)); 
-
-            // 💡 残ったブロックを重力で落下させる（隙間を詰める）
-            for (let c = 0; c < 9; c++) {
-                let emp = 17;
-                for (let r = 17; r >= 0; r--) {
-                    if (this.board[r][c] !== 0) {
-                        if (r !== emp) {
-                            this.board[emp][c] = this.board[r][c];
-                            this.board[r][c] = 0;
-                        }
-                        emp--;
-                    }
-                }
-            }
-            CanvasSys.renderAll(this.board, null);
-            
-            // 落ちた後の余韻
-            await new Promise(res => setTimeout(res, 200)); 
-        }
-
-        if (lineCombo > 1) {
-            document.getElementById('combo-display').innerText = `🔥 ${lineCombo} LINES COMBO!`;
+            // 次の行が弾けるまで0.4秒待つ（これが気持ちいい！）
+            await new Promise(res => setTimeout(res, 400)); 
         }
     },
 
@@ -1016,25 +995,19 @@ const Action = {
         if(UI.state !== 'TETRIS') return;
         if(act === 'left' && !Game.collide(Game.curPiece.x-1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x--; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'right' && !Game.collide(Game.curPiece.x+1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
-        else if(act === 'drop') { Game.drop(); Sys.vibrate(5); }
+        else if(act === 'drop' && !Game.collide(Game.curPiece.x, Game.curPiece.y+1, Game.curPiece.shape)) { Game.curPiece.y++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'rotate') { const nShape = Game.curPiece.shape[0].map((_, i) => Game.curPiece.shape.map(r => r[i]).reverse()); if(!Game.collide(Game.curPiece.x, Game.curPiece.y, nShape)) { Game.curPiece.shape = nShape; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(10); } }
         else if(act === 'hardDrop') { while(!Game.collide(Game.curPiece.x, Game.curPiece.y+1, Game.curPiece.shape)) Game.curPiece.y++; if(Game.interval) clearInterval(Game.interval); Game.merge(); Sys.vibrate(20); }
     }
 };
 
-// 💡 PC操作の完全バグ回避（画面スクロールも防止し、WASDキーにも対応）
+// 💡 PC操作の完全バグ回避（画面スクロール防止＆WASD対応）
 document.addEventListener('keydown', (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         if(UI.state === 'TETRIS' || UI.state === 'MATH') e.preventDefault(); 
     }
 
-    if (UI.state === 'MATH') {
-        if (!isNaN(MathInput.answer)) {
-            if(e.key >= '0' && e.key <= '9' || e.key === '-' || e.key === '.') MathInput.add(e.key);
-            else if(e.key === 'Backspace') MathInput.del();
-            else if(e.key === 'Enter') MathInput.submitPC(); 
-        }
-    } else if (UI.state === 'TETRIS') {
+    if (UI.state === 'TETRIS') {
         AudioSys.wakeUp();
         if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') Action.doAct('left');
         else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') Action.doAct('right');
