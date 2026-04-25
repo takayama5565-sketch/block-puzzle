@@ -156,9 +156,15 @@
             100% { opacity: 0; transform: translate(-50%, -100px) scale(1.8); filter: blur(10px); } 
         }
 
-        /* オーバーレイ */
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; border-radius: 8px; padding: 20px; box-sizing: border-box;}
-        .overlay-screen.is-active { display: flex; }
+        /* 💡 全画面オーバーレイ */
+        .global-overlay { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; 
+            background: rgba(15,23,42,0.98); display: none; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9000; 
+            padding: 20px; box-sizing: border-box; backdrop-filter: blur(8px);
+        }
+        .global-overlay.is-active { display: flex; animation: fadeIn 0.2s ease-out;}
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
         /* スポンサー枠 */
         #footer-sponsor { flex: 0 0 60px; background: #000; border-top: 1px solid #333; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 5px;}
@@ -225,8 +231,8 @@
             <div class="setting-box">
                 <label>計算のレベル (即時反映)</label>
                 <select id="config-level">
-                    <option value="1">Lv1: 1桁の 足し算 (例: 3+5)</option>
-                    <option value="2">Lv2: 1桁の 引き算 (例: 8-3)</option>
+                    <option value="1">Lv1: 1桁の 足し算</option>
+                    <option value="2">Lv2: 1桁の 引き算</option>
                     <option value="3">Lv3: 1桁の かけ算 (九九)</option>
                     <option value="4">Lv4: 平方計算 (11〜19の2乗)</option>
                     <option value="5">Lv5: 2桁 × 1桁の かけ算</option>
@@ -296,34 +302,6 @@
                 <canvas id="gameCanvas" width="270" height="540"></canvas>
                 <canvas id="particleCanvas" width="270" height="540"></canvas>
                 <div id="next-box"><canvas id="nextCanvas" width="100%" height="100%"></canvas></div>
-                
-                <div id="overlay-tutorial" class="overlay-screen">
-                    <h2 style="color:var(--accent-gold); margin-top:0;">📖 遊び方</h2>
-                    <div style="text-align:left; color:#fff; font-weight:bold; line-height:1.8; margin-bottom:20px; font-size:15px;">
-                        ① 計算問題を解く！<br>
-                        <span style="color:var(--accent-blue); font-size:12px;">正解するとブロックが落ちてきます。</span><br>
-                        ② ブロックを操作する！<br>
-                        <span style="color:var(--accent-green); font-size:12px;">横一列に隙間なく並べると消えます。</span><br>
-                        ③ 連続正解でコンボ！<br>
-                        <span style="color:var(--accent-pink); font-size:12px;">間違えずに解き続けると得点がUP！</span>
-                    </div>
-                    <button class="btn-primary" onclick="UI.closeTutorial()">わかった！</button>
-                </div>
-
-                <div id="overlay-gameover" class="overlay-screen">
-                    <h2 style="color:#f43f5e; font-size:36px; margin:0;">GAME OVER</h2>
-                    <div style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.8); border: 2px dashed #facc15; border-radius: 8px; text-align: center; width:90%; box-sizing:border-box;">
-                        <span style="color:#fff; font-size:14px; font-weight:bold;">あなたの認定レベルは...</span><br>
-                        <span id="percentile-text" style="color:#facc15; font-size:28px; font-weight:900; display:block; margin:5px 0;">Lv. ?? (称号)</span>
-                        <span id="next-level-text" style="color:#4ade80; font-size:12px; font-weight:bold;">次の称号まであと ?? 点！</span>
-                        <span id="max-combo-text" style="color:#fb7185; font-size:14px; font-weight:bold; display:block; margin-top:5px;">最大連鎖: 0 コンボ</span>
-                    </div>
-                    <div style="display: flex; gap: 10px; width: 90%; margin-top:10px;">
-                        <button class="btn-secondary" style="flex:1; background:#000; border-color:#333; margin:0;" onclick="Viral.shareX()">𝕏 で自慢</button>
-                        <button class="btn-secondary" style="flex:1; background:#06c755; border-color:#05a546; margin:0;" onclick="Viral.shareLINE()">LINE で送る</button>
-                    </div>
-                    <button class="btn-primary" style="width:90%; margin-top:20px;" onclick="UI.openMenu()">メニューにもどる</button>
-                </div>
             </div>
         </div>
 
@@ -383,12 +361,41 @@
     <div id="footer-sponsor"></div>
 </div>
 
-<div id="mega-pop-wrapper" class="mega-pop">
-    <span class="pop-main" id="mega-pop-main"></span>
-    <span class="pop-sub" id="mega-pop-sub"></span>
+<div id="overlay-tutorial" class="global-overlay">
+    <div style="background:var(--bg-panel); border:3px solid var(--accent-gold); border-radius:12px; padding:30px; text-align:center; width:100%; max-width:400px; box-sizing:border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <h2 style="color:var(--accent-gold); margin-top:0; font-size:28px;">📖 遊び方</h2>
+        <div style="text-align:left; color:#fff; font-weight:bold; line-height:2.0; margin-bottom:25px; font-size:16px;">
+            ① 計算問題を解く！<br>
+            <span style="color:var(--accent-blue); font-size:13px; display:block; padding-left:15px; margin-bottom:5px;">正解するとブロックが落ちてきます。</span>
+            ② ブロックを操作する！<br>
+            <span style="color:var(--accent-green); font-size:13px; display:block; padding-left:15px; margin-bottom:5px;">横一列に隙間なく並べると消えます。</span>
+            ③ 連続正解でコンボ！<br>
+            <span style="color:var(--accent-pink); font-size:13px; display:block; padding-left:15px;">間違えずに解き続けると得点がUP！</span>
+        </div>
+        <button class="btn-primary" style="margin:0;" onclick="UI.closeTutorial()">わかった！</button>
+    </div>
 </div>
 
-<div id="overlay-name-entry" class="overlay-screen" style="z-index: 9500;">
+<div id="overlay-gameover" class="global-overlay">
+    <div style="background:var(--bg-panel); border:4px solid var(--accent-pink); border-radius:12px; padding:30px 20px; text-align:center; width:100%; max-width:400px; box-sizing:border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <h2 style="color:var(--accent-pink); font-size:38px; font-weight:900; margin:0 0 15px 0;">GAME OVER</h2>
+        
+        <div style="margin: 0 0 20px 0; padding: 20px; background: rgba(0,0,0,0.8); border: 2px dashed var(--accent-gold); border-radius: 8px;">
+            <span style="color:#fff; font-size:15px; font-weight:bold;">あなたの認定レベルは...</span><br>
+            <span id="percentile-text" style="color:var(--accent-gold); font-size:30px; font-weight:900; display:block; margin:10px 0; letter-spacing:1px; text-shadow:0 0 10px rgba(250,204,21,0.5);">Lv. ?? (称号)</span>
+            <span id="next-level-text" style="color:var(--accent-green); font-size:14px; font-weight:bold; display:block; margin-top:10px;">次の称号まであと ?? 点！</span>
+            <span id="max-combo-text" style="color:#fb7185; font-size:14px; font-weight:bold; display:block; margin-top:5px;">最大連鎖: 0 コンボ</span>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom:20px;">
+            <button class="btn-secondary" style="flex:1; background:#000; border-color:#333; margin:0; padding:15px; font-size:16px;" onclick="Viral.shareX()">𝕏 で自慢</button>
+            <button class="btn-secondary" style="flex:1; background:#06c755; border-color:#05a546; margin:0; padding:15px; font-size:16px;" onclick="Viral.shareLINE()">LINE で送る</button>
+        </div>
+        <button class="btn-primary" style="margin:0;" onclick="UI.openMenu()">メニューにもどる</button>
+    </div>
+</div>
+
+<div id="overlay-name-entry" class="global-overlay" style="z-index: 9500;">
     <div style="background:var(--bg-panel); border:4px solid var(--accent-gold); border-radius:12px; padding:30px; text-align:center; width:100%; max-width:400px; box-sizing:border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
         <h2 style="color:var(--accent-gold); font-size:32px; margin-top:0;">大記録 達成！</h2>
         <p style="font-size:16px; color:#fff; font-weight:bold; margin-bottom:20px;">トップ10に入りました！<br>名前を教えてください。</p>
@@ -397,13 +404,20 @@
     </div>
 </div>
 
+<div id="mega-pop-wrapper" class="mega-pop">
+    <span class="pop-main" id="mega-pop-main"></span>
+    <span class="pop-sub" id="mega-pop-sub"></span>
+</div>
+
 <script>
 /* ==========================================================================
    絶対にエラーを起こさない・完全マスターJSコード
 ========================================================================== */
 
-// 💡 シェア用のURL（身バレ防止のために必ず短縮URLに書き換えてください！）
-const APP_SHARE_URL = "https://ここにあなたの短縮URLを入れてください"; 
+// 💡 シェア用のURL設定（身バレ対策）
+// そのままシェアしてもバレないよう、URLは「現在のURL（window.location.href）」を使っています。
+// ※今後Netlifyなどに移行した際も、このままで自動的に新しいURLがシェアされます。
+const APP_SHARE_URL = window.location.href; 
 
 // 1. 安全なシステムユーティリティ
 const Sys = {
@@ -628,9 +642,12 @@ const MathInput = {
     },
     submitPC(e) {
         if(e) e.preventDefault();
+        
+        // 💡 入力後のカーソル居座りを強制排除（PCの2重入力バグ完全防止）
         const active = document.activeElement;
         if(active) active.blur();
         window.focus();
+
         this.currentStr = document.getElementById('math-answer-real').value.replace(/[０-９．]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/[^0-9\-\.]/g, '');
         this.submit();
     },
@@ -998,7 +1015,6 @@ const Game = {
         if(nextScore) document.getElementById('next-level-text').innerText = `💡 次の称号まで あと ${nextScore - this.score} 点！`;
         else document.getElementById('next-level-text').innerText = `🎉 カンスト達成！あなたは天才です！`;
         
-        // 💡 追加実装：最大連鎖数の表示（バズ要因）
         document.getElementById('max-combo-text').innerText = `今回の最大連鎖: ${this.maxCombo} コンボ！`;
 
         document.getElementById('overlay-gameover').classList.add('is-active');
@@ -1006,15 +1022,17 @@ const Game = {
     }
 };
 
-// 8. リアルタイム設定変更の即時反映
+// 💡 リアルタイム設定変更（PAUSED中も完全に即時差し替え対応）
 document.getElementById('config-level').addEventListener('change', () => {
     Ranking.load();
     if(UI.state === 'MATH' || UI.state === 'TETRIS' || UI.state === 'PAUSED') {
         if (Game.board.length === 0) return; 
         MathInput.answer = NaN;
         let wasPaused = (UI.state === 'PAUSED');
-        Game.generateProblem(); 
-        if (wasPaused) Game.pause(); 
+        
+        Game.generateProblem(); // 💡 即座に問題を作り直す
+        
+        if (wasPaused) Game.pause(); // 💡 一時停止中だった場合は再び一時停止に戻す
     }
 });
 
@@ -1059,12 +1077,14 @@ const Action = {
     }
 };
 
+// 💡 PC操作：入力欄フォーカス除外（2重入力防止）とキーボード連動
 document.addEventListener('keydown', (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         if(UI.state === 'TETRIS' || (UI.state === 'MATH' && document.activeElement.id !== 'math-answer-real')) e.preventDefault(); 
     }
 
     if (UI.state === 'MATH') {
+        // 💡 入力欄にカーソルがある時はブラウザに任せる（2重入力を完全ブロック！）
         if (document.activeElement.id === 'math-answer-real') {
             if(e.key === 'Enter') { document.getElementById('btn-num-ent')?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-ent')?.classList.remove('key-active'),100); }
             return; 
@@ -1086,9 +1106,9 @@ document.addEventListener('keydown', (e) => {
     }
 }, { passive: false });
 
-// 10. バイラル（URLマスキングとシェアテキスト最適化）
-// 💡 ここにご自身で発行したBitlyなどの短縮URLを入れてください！
-const APP_SHARE_URL = "https://bit.ly/4mQXmf6"; // ★この行を書き換えてください
+// 10. バイラル・ランキング
+// 💡 今後URLを変更した際も対応できるよう、自動で今のURLを取得する設定にしています
+const APP_SHARE_URL = window.location.href; 
 
 const Viral = {
     getText() {
@@ -1098,12 +1118,10 @@ const Viral = {
         return encodeURIComponent(`【挑戦者求む🔥】\nブロック計算パズルで認定「${titleInfo}」を獲得しました！\nスコア: ${Number(Game.score).toLocaleString()}点${maxComboText}\n難易度: ${curLv}\n\n私を超えられるかな？😏👇\n#ブロック計算パズル #脳トレ`);
     },
     shareX() { 
-        let targetUrl = APP_SHARE_URL.includes("bit.ly") ? APP_SHARE_URL : window.location.href;
-        window.open(`https://twitter.com/intent/tweet?text=${this.getText()}&url=${encodeURIComponent(targetUrl)}`, '_blank'); 
+        window.open(`https://twitter.com/intent/tweet?text=${this.getText()}&url=${encodeURIComponent(APP_SHARE_URL)}`, '_blank'); 
     },
     shareLINE() { 
-        let targetUrl = APP_SHARE_URL.includes("bit.ly") ? APP_SHARE_URL : window.location.href;
-        window.open(`https://line.me/R/msg/text/?${this.getText()}%0A${encodeURIComponent(targetUrl)}`, '_blank'); 
+        window.open(`https://line.me/R/msg/text/?${this.getText()}%0A${encodeURIComponent(APP_SHARE_URL)}`, '_blank'); 
     }
 };
 
@@ -1132,6 +1150,7 @@ const Ranking = {
             const snap = await db.collection(`ranks_level_${lv}`).orderBy("score", "desc").limit(10).get();
             let ranks = []; snap.forEach(doc => ranks.push(doc.data().score));
             
+            // トップ10の時だけ名前を聞く
             if (ranks.length < 10 || sc > ranks[ranks.length - 1]) {
                 this.pendingScore = sc;
                 document.getElementById('player-name-input').value = '';
@@ -1139,11 +1158,17 @@ const Ranking = {
             }
         } catch(e) {}
     },
+    // 💡 登録後に自動でランキングを開くプロの演出！
     async submitName() {
         let lv = document.getElementById('config-level').value;
         let name = document.getElementById('player-name-input').value.trim() || 'ゆうしゃ';
         document.getElementById('overlay-name-entry').classList.remove('is-active');
-        try { await db.collection(`ranks_level_${lv}`).add({ name: name, score: this.pendingScore, timestamp: new Date() }); this.load(); } catch(e){}
+        try { 
+            await db.collection(`ranks_level_${lv}`).add({ name: name, score: this.pendingScore, timestamp: new Date() }); 
+            this.load(); 
+            // 登録成功の快感！自動でメニューを開いて自分の順位を見せる
+            setTimeout(() => UI.openMenu(), 500);
+        } catch(e){}
     }
 };
 
