@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ブロック計算パズル - 最終確定版 -</title>
+    <title>ブロック計算パズル - 最終リリース版 -</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
@@ -26,8 +26,9 @@
             user-select: none; -webkit-user-select: none;
         }
 
-        #app-container { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        #app-container { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; }
 
+        /* スマホヘッダー */
         #mobile-header {
             flex: 0 0 55px; display: flex; justify-content: space-between; align-items: center;
             padding: 0 15px; background: var(--bg-panel); border-bottom: 2px solid var(--accent-blue);
@@ -37,6 +38,7 @@
         .top-score { font-size: 24px; font-weight: 900; margin: 0; color: var(--accent-gold); transition: transform 0.1s;}
         .menu-toggle-btn { background: var(--btn-bg); color: var(--accent-blue); border: 2px solid var(--accent-blue); border-radius: 6px; padding: 6px 12px; font-weight: bold; cursor: pointer; }
 
+        /* メインエリア */
         #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
         /* =========================================
@@ -129,14 +131,14 @@
         .error-shake { animation: errShake 0.4s cubic-bezier(.36,.07,.19,.97) both; background-color: #e11d48 !important; border-color: #fff !important;}
         @keyframes errShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
         
-        /* 💡 超高速メガポップアップ（0.4秒でスッと消える） */
+        /* 💡 超高速メガポップアップ（0.4秒で消滅） */
         .mega-pop { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.1); 
             opacity: 0; pointer-events: none; z-index: 10000; text-align: center; white-space: nowrap; 
             text-shadow: 0 0 20px #000, 0 0 50px #000, 6px 6px 0 #000; 
         }
         .mega-pop.play-fast { animation: popFast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .mega-pop.play-slow { animation: popSlow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .mega-pop.play-slow { animation: popSlow 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         
         .mega-pop .pop-main { font-size: clamp(60px, 18vw, 150px); font-weight: 900; font-style: italic; display: block; letter-spacing: 2px; -webkit-text-stroke: 3px #fff;}
         .mega-pop .pop-sub { font-size: clamp(40px, 12vw, 100px); font-weight: 900; display: block; margin-top: 5px; -webkit-text-stroke: 2px #fff;}
@@ -154,9 +156,15 @@
             100% { opacity: 0; transform: translate(-50%, -100px) scale(1.8); filter: blur(10px); } 
         }
 
-        /* オーバーレイ */
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.95); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 200; border-radius: 8px; padding: 20px; box-sizing: border-box;}
-        .overlay-screen.is-active { display: flex; }
+        /* 💡 全画面オーバーレイ（スマホの表示切れを完全防止！） */
+        .global-overlay { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; 
+            background: rgba(15,23,42,0.98); display: none; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9000; 
+            padding: 20px; box-sizing: border-box; backdrop-filter: blur(8px);
+        }
+        .global-overlay.is-active { display: flex; animation: fadeIn 0.2s ease-out;}
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
         /* スポンサー枠 */
         #footer-sponsor { flex: 0 0 60px; background: #000; border-top: 1px solid #333; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 5px;}
@@ -196,7 +204,6 @@
             
             #real-input-container { display: flex !important; gap: 10px; width: 100%; margin-top: 10px;}
             #math-answer-real { flex: 1; padding: 15px; border-radius: 8px; font-size: 28px; text-align: center; font-weight: bold; border: 3px solid var(--btn-border); background: #fff; color: #000; width: 100%; box-sizing: border-box;}
-            /* PCでは計算中に入力を許可、テトリス中は無効化する */
             #math-answer-real:disabled { background: #cbd5e1; border-color: #94a3b8; }
             #answer-btn-real { width: 90px; background-color: var(--accent-blue); box-shadow: 0 5px 0 #0284c7; color: #000; font-weight: 900; font-size: 18px; border-radius: 8px; border: none; cursor: pointer;}
             #answer-btn-real:active { transform: translateY(5px); box-shadow: 0 0 0 #0284c7;}
@@ -222,7 +229,7 @@
             <button class="btn-secondary" style="background:var(--accent-blue); color:#000; box-shadow:0 4px 0 #0284c7;" onclick="UI.openTutorial()">📖 遊び方を見る</button>
 
             <div class="setting-box">
-                <label>計算のレベル (即時変更)</label>
+                <label>計算のレベル (即時反映)</label>
                 <select id="config-level">
                     <option value="1">Lv1: 1桁の 足し算 (例: 3+5)</option>
                     <option value="2">Lv2: 1桁の 引き算 (例: 8-3)</option>
@@ -243,7 +250,7 @@
                 </select>
             </div>
             <div class="setting-box">
-                <label>タイムボーナス (即時変更)</label>
+                <label>タイムボーナス (即時反映)</label>
                 <select id="config-time">
                     <option value="0">なし (じっくり考える)</option>
                     <option value="10">10秒以内 に答える</option>
@@ -253,7 +260,7 @@
                 </select>
             </div>
             <div class="setting-box">
-                <label>スピード (即時変更)</label>
+                <label>スピード (即時反映)</label>
                 <select id="config-speed">
                     <option value="1">1 (ゆっくり)</option>
                     <option value="3">3</option>
@@ -295,33 +302,6 @@
                 <canvas id="gameCanvas" width="270" height="540"></canvas>
                 <canvas id="particleCanvas" width="270" height="540"></canvas>
                 <div id="next-box"><canvas id="nextCanvas" width="100%" height="100%"></canvas></div>
-                
-                <div id="overlay-tutorial" class="overlay-screen">
-                    <h2 style="color:var(--accent-gold); margin-top:0;">📖 遊び方</h2>
-                    <div style="text-align:left; color:#fff; font-weight:bold; line-height:1.8; margin-bottom:20px; font-size:15px;">
-                        ① 計算問題を解く！<br>
-                        <span style="color:var(--accent-blue); font-size:12px;">正解するとブロックが落ちてきます。</span><br>
-                        ② ブロックを操作する！<br>
-                        <span style="color:var(--accent-green); font-size:12px;">横一列に隙間なく並べると消えます。</span><br>
-                        ③ 連続正解でコンボ！<br>
-                        <span style="color:var(--accent-pink); font-size:12px;">間違えずに解き続けると得点がUP！</span>
-                    </div>
-                    <button class="btn-primary" onclick="UI.closeTutorial()">わかった！</button>
-                </div>
-
-                <div id="overlay-gameover" class="overlay-screen">
-                    <h2 style="color:#f43f5e; font-size:36px; margin:0;">GAME OVER</h2>
-                    <div style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.8); border: 2px dashed #facc15; border-radius: 8px; text-align: center; width:90%; box-sizing:border-box;">
-                        <span style="color:#fff; font-size:14px; font-weight:bold;">あなたの認定レベルは...</span><br>
-                        <span id="percentile-text" style="color:#facc15; font-size:28px; font-weight:900; display:block; margin:5px 0;">Lv. ?? (称号)</span>
-                        <span id="next-level-text" style="color:#4ade80; font-size:12px; font-weight:bold;">次の称号まであと ?? 点！</span>
-                    </div>
-                    <div style="display: flex; gap: 10px; width: 90%; margin-top:10px;">
-                        <button class="btn-secondary" style="flex:1; background:#000; border-color:#333; margin:0;" onclick="Viral.shareX()">𝕏 で自慢</button>
-                        <button class="btn-secondary" style="flex:1; background:#06c755; border-color:#05a546; margin:0;" onclick="Viral.shareLINE()">LINE で送る</button>
-                    </div>
-                    <button class="btn-primary" style="width:90%; margin-top:20px;" onclick="UI.openMenu()">メニューにもどる</button>
-                </div>
             </div>
         </div>
 
@@ -381,18 +361,51 @@
     <div id="footer-sponsor"></div>
 </div>
 
+<div id="overlay-tutorial" class="global-overlay">
+    <div style="background:var(--bg-panel); border:3px solid var(--accent-gold); border-radius:12px; padding:30px; text-align:center; width:100%; max-width:400px; box-sizing:border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <h2 style="color:var(--accent-gold); margin-top:0; font-size:28px;">📖 遊び方</h2>
+        <div style="text-align:left; color:#fff; font-weight:bold; line-height:2.0; margin-bottom:25px; font-size:16px;">
+            ① 計算問題を解く！<br>
+            <span style="color:var(--accent-blue); font-size:13px; display:block; padding-left:15px; margin-bottom:5px;">正解するとブロックが落ちてきます。</span>
+            ② ブロックを操作する！<br>
+            <span style="color:var(--accent-green); font-size:13px; display:block; padding-left:15px; margin-bottom:5px;">横一列に隙間なく並べると消えます。</span>
+            ③ 連続正解でコンボ！<br>
+            <span style="color:var(--accent-pink); font-size:13px; display:block; padding-left:15px;">間違えずに解き続けると得点がUP！</span>
+        </div>
+        <button class="btn-primary" style="margin:0;" onclick="UI.closeTutorial()">わかった！</button>
+    </div>
+</div>
+
+<div id="overlay-gameover" class="global-overlay">
+    <div style="background:var(--bg-panel); border:4px solid var(--accent-pink); border-radius:12px; padding:30px 20px; text-align:center; width:100%; max-width:400px; box-sizing:border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <h2 style="color:var(--accent-pink); font-size:38px; font-weight:900; margin:0 0 15px 0;">GAME OVER</h2>
+        
+        <div style="margin: 0 0 20px 0; padding: 20px; background: rgba(0,0,0,0.8); border: 2px dashed var(--accent-gold); border-radius: 8px;">
+            <span style="color:#fff; font-size:15px; font-weight:bold;">あなたの認定レベルは...</span><br>
+            <span id="percentile-text" style="color:var(--accent-gold); font-size:30px; font-weight:900; display:block; margin:10px 0; letter-spacing:1px; text-shadow:0 0 10px rgba(250,204,21,0.5);">Lv. ?? (称号)</span>
+            <span id="next-level-text" style="color:var(--accent-green); font-size:14px; font-weight:bold; display:block; margin-top:10px;">次の称号まであと ?? 点！</span>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom:20px;">
+            <button class="btn-secondary" style="flex:1; background:#000; border-color:#333; margin:0; padding:15px; font-size:16px;" onclick="Viral.shareX()">𝕏 で自慢</button>
+            <button class="btn-secondary" style="flex:1; background:#06c755; border-color:#05a546; margin:0; padding:15px; font-size:16px;" onclick="Viral.shareLINE()">LINE で送る</button>
+        </div>
+        <button class="btn-primary" style="margin:0;" onclick="UI.openMenu()">メニューにもどる</button>
+    </div>
+</div>
+
+<div id="overlay-name-entry" class="global-overlay" style="z-index: 9500;">
+    <div style="background:var(--bg-panel); border:4px solid var(--accent-gold); border-radius:12px; padding:30px; text-align:center; width:100%; max-width:400px; box-sizing:border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <h2 style="color:var(--accent-gold); font-size:32px; margin-top:0;">大記録 達成！</h2>
+        <p style="font-size:16px; color:#fff; font-weight:bold; margin-bottom:20px;">トップ10に入りました！<br>名前を教えてください。</p>
+        <input type="text" id="player-name-input" maxlength="10" placeholder="ゆうしゃ" autocomplete="off" style="width:100%; padding:15px; font-size:24px; text-align:center; border-radius:8px; border:3px solid var(--btn-border); margin-bottom:20px; box-sizing:border-box; outline:none; font-weight:bold;">
+        <button class="btn-primary" style="margin:0;" onclick="Ranking.submitName()">記録する</button>
+    </div>
+</div>
+
 <div id="mega-pop-wrapper" class="mega-pop">
     <span class="pop-main" id="mega-pop-main"></span>
     <span class="pop-sub" id="mega-pop-sub"></span>
-</div>
-
-<div id="overlay-name-entry" class="overlay-screen" style="z-index: 250;">
-    <div style="background:var(--bg-panel); border:3px solid var(--accent-gold); border-radius:12px; padding:20px; text-align:center; width:90%; max-width:350px;">
-        <h2 style="color:var(--accent-gold); margin-top:0;">大記録 達成！</h2>
-        <p style="font-size:14px; color:#fff; margin-bottom:15px;">トップ10に入りました！<br>名前を教えてください。</p>
-        <input type="text" id="player-name-input" maxlength="10" placeholder="ゆうしゃ" autocomplete="off" style="width:100%; padding:12px; font-size:20px; text-align:center; border-radius:8px; border:2px solid var(--btn-border); margin-bottom:15px; box-sizing:border-box;">
-        <button class="btn-primary" onclick="Ranking.submitName()">記録する</button>
-    </div>
 </div>
 
 <script>
@@ -533,7 +546,7 @@ const UI = {
             if (Sys.storageGet('block_puzzle_save')) document.getElementById('btn-group-saved').style.display = 'block';
             else document.getElementById('btn-group-init').style.display = 'block';
             
-            if(window.innerWidth < 800) document.getElementById('left-sidebar').classList.add('is-active');
+            if(window.innerWidth < 800 && this.state !== 'GAMEOVER') document.getElementById('left-sidebar').classList.add('is-active');
             if(inputReal) { inputReal.disabled = true; btnReal.disabled = true; }
 
         } else if (this.state === 'PAUSED') {
@@ -554,7 +567,6 @@ const UI = {
                 }
             } else {
                 document.getElementById('puzzle-ui').style.display = 'flex';
-                // 💡 PCバグ修正：テトリス開始時に強制的にフォーカスを外す
                 if(window.innerWidth >= 800 && inputReal) {
                     inputReal.disabled = true; btnReal.disabled = true;
                     inputReal.blur(); btnReal.blur(); window.focus();
@@ -565,7 +577,10 @@ const UI = {
     
     openMenu() {
         if(this.state === 'MATH' || this.state === 'TETRIS') Game.pause();
-        if(window.innerWidth < 800) document.getElementById('left-sidebar').classList.add('is-active');
+        if(window.innerWidth < 800) {
+            document.getElementById('overlay-gameover').classList.remove('is-active');
+            document.getElementById('left-sidebar').classList.add('is-active');
+        }
     },
     closeMenu() {
         if(this.state === 'PAUSED') {
@@ -596,7 +611,7 @@ const UI = {
 
 window.addEventListener('resize', () => {
     if(window.innerWidth >= 800) document.getElementById('left-sidebar').classList.remove('is-active');
-    else if (UI.state === 'INIT' || UI.state === 'PAUSED' || UI.state === 'GAMEOVER') document.getElementById('left-sidebar').classList.add('is-active');
+    else if (UI.state === 'INIT' || UI.state === 'PAUSED') document.getElementById('left-sidebar').classList.add('is-active');
     UI.update(); 
     updateSponsors();
 });
@@ -702,13 +717,14 @@ const Game = {
     interval: null, speedMs: 1000, speedLevel: 5,
     curPiece: null, nxtPiece: null, hideNext: false,
     timerAnim: null, startTime: 0, timeLimit: 0,
+    isAnimating: false, 
     
     startNew(forceReset = false) {
         AudioSys.wakeUp();
         if(forceReset) Sys.storageRemove('block_puzzle_save');
         
         this.board = Array.from({length: 18}, () => Array(9).fill(0));
-        this.score = 0; this.mathCombo = 0;
+        this.score = 0; this.mathCombo = 0; this.isAnimating = false;
         document.getElementById('overlay-gameover').classList.remove('is-active');
         UI.updateScore(0);
         
@@ -732,7 +748,7 @@ const Game = {
             document.getElementById('config-speed').value = data.speed || "5";
         } catch(e) { return this.startNew(true); }
         
-        this.mathCombo = 0;
+        this.mathCombo = 0; this.isAnimating = false;
         document.getElementById('overlay-gameover').classList.remove('is-active');
         UI.updateScore(this.score);
         
@@ -906,7 +922,7 @@ const Game = {
     },
 
     drop() {
-        if (UI.state !== 'TETRIS') return;
+        if (UI.state !== 'TETRIS' || this.isAnimating) return;
         if (!this.collide(this.curPiece.x, this.curPiece.y + 1, this.curPiece.shape)) {
             this.curPiece.y++; CanvasSys.renderAll(this.board, this.curPiece);
         } else {
@@ -922,12 +938,15 @@ const Game = {
         
         Sys.storageSet('block_puzzle_save', JSON.stringify({ board: this.board, score: this.score, level: document.getElementById('config-level').value, speed: document.getElementById('config-speed').value }));
         
+        // 💡 finally構文で、どんなことがあっても絶対に次の問題を出す安全設計
         this.processChains().catch(e => console.error(e)).finally(() => {
-            this.generateProblem(); // 💡 絶対に次の問題へ行く
+            this.isAnimating = false;
+            this.generateProblem(); 
         });
     },
 
     async processChains() {
+        this.isAnimating = true; 
         let lineCombo = 0; let clearedLinesTotal = 0;
         
         while(true) {
@@ -973,7 +992,6 @@ const Game = {
         }
     },
 
-    // 💡 ニアミス効果を取り入れたゲームオーバー
     triggerGameOver() {
         this.pause(); UI.state = 'GAMEOVER'; Sys.storageRemove('block_puzzle_save');
         
@@ -993,7 +1011,7 @@ const Game = {
     }
 };
 
-// 💡 【バグ解決】リアルタイム設定変更（PAUSED中も確実に対応）
+// 8. リアルタイム「レベル」等設定変更の即時反映
 document.getElementById('config-level').addEventListener('change', () => {
     Ranking.load();
     if(UI.state === 'MATH' || UI.state === 'TETRIS' || UI.state === 'PAUSED') {
@@ -1032,12 +1050,12 @@ const Action = {
     timer: null,
     start(act, isForce = false, e) {
         if(e) e.preventDefault(); AudioSys.wakeUp();
-        if(UI.state !== 'TETRIS') return;
+        if(UI.state !== 'TETRIS' || Game.isAnimating) return; 
         this.doAct(act); if(!isForce) this.timer = setInterval(() => this.doAct(act), 120);
     },
     stop(e) { if(e) e.preventDefault(); if(this.timer) clearInterval(this.timer); },
     doAct(act) {
-        if(UI.state !== 'TETRIS') return;
+        if(UI.state !== 'TETRIS' || Game.isAnimating) return;
         if(act === 'left' && !Game.collide(Game.curPiece.x-1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x--; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'right' && !Game.collide(Game.curPiece.x+1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'drop' && !Game.collide(Game.curPiece.x, Game.curPiece.y+1, Game.curPiece.shape)) { Game.curPiece.y++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
@@ -1046,21 +1064,17 @@ const Action = {
     }
 };
 
-// 💡 PC操作：入力欄のフォーカス除外（2重入力防止）とキーボードUI連動
+// 💡 PC操作：入力欄フォーカス除外＆キーボード連動
 document.addEventListener('keydown', (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         if(UI.state === 'TETRIS' || (UI.state === 'MATH' && document.activeElement.id !== 'math-answer-real')) e.preventDefault(); 
     }
 
     if (UI.state === 'MATH') {
-        // 入力欄にカーソルがある時はブラウザ標準の入力に任せる（2重入力バグの完全排除）
         if (document.activeElement.id === 'math-answer-real') {
-            if(e.key === 'Enter') {
-                document.getElementById('btn-num-ent')?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-ent')?.classList.remove('key-active'),100);
-            }
+            if(e.key === 'Enter') { document.getElementById('btn-num-ent')?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-ent')?.classList.remove('key-active'),100); }
             return; 
         }
-
         if (!isNaN(MathInput.answer)) {
             if(e.key >= '0' && e.key <= '9') { MathInput.add(e.key); document.getElementById('btn-num-'+e.key)?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-'+e.key)?.classList.remove('key-active'),100); }
             else if(e.key === '-') { MathInput.add('-'); document.getElementById('btn-num-min')?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-min')?.classList.remove('key-active'),100); }
@@ -1078,7 +1092,7 @@ document.addEventListener('keydown', (e) => {
     }
 }, { passive: false });
 
-// 10. バイラル・ランキング（名前入力のURL非表示化）
+// 10. バイラル・ランキング
 const Viral = {
     getText() {
         let curLv = document.getElementById('config-level').options[document.getElementById('config-level').selectedIndex].text;
@@ -1114,7 +1128,6 @@ const Ranking = {
             const snap = await db.collection(`ranks_level_${lv}`).orderBy("score", "desc").limit(10).get();
             let ranks = []; snap.forEach(doc => ranks.push(doc.data().score));
             
-            // 💡 本当にトップ10に入った時だけ、カスタムの名前入力画面を出す
             if (ranks.length < 10 || sc > ranks[ranks.length - 1]) {
                 this.pendingScore = sc;
                 document.getElementById('player-name-input').value = '';
