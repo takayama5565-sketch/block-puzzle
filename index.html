@@ -62,7 +62,7 @@
             border: 3px solid var(--accent-blue); border-radius: 8px; box-shadow: 0 0 15px rgba(56,189,248,0.2);
             background-color: #020617; overflow: hidden;
         }
-        .screen-shake { animation: shakeHard 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+        .screen-shake { animation: shakeHard 0.2s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shakeHard { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-5px, 5px); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-5px, -5px); } 80% { transform: translate(5px, 5px); } }
 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -131,30 +131,29 @@
         .error-shake { animation: errShake 0.4s cubic-bezier(.36,.07,.19,.97) both; background-color: #e11d48 !important; border-color: #fff !important;}
         @keyframes errShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
         
-        /* 💡 メガポップアップ（スピードと快感の両立） */
+        /* 💡 超高速メガポップアップ（0.4秒で消滅） */
         .mega-pop { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.1); 
             opacity: 0; pointer-events: none; z-index: 10000; text-align: center; white-space: nowrap; 
             text-shadow: 0 0 20px #000, 0 0 50px #000, 6px 6px 0 #000; 
         }
-        /* スピードプレイ用：0.25秒で一瞬で消える */
-        .mega-pop.play-fast { animation: popFast 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        /* ライン消去快感用：ゆっくり0.8秒見せる */
-        .mega-pop.play-slow { animation: popSlow 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .mega-pop.play-fast { animation: popFast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .mega-pop.play-slow { animation: popSlow 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         
         .mega-pop .pop-main { font-size: clamp(60px, 18vw, 150px); font-weight: 900; font-style: italic; display: block; letter-spacing: 2px; -webkit-text-stroke: 3px #fff;}
         .mega-pop .pop-sub { font-size: clamp(40px, 12vw, 100px); font-weight: 900; display: block; margin-top: 5px; -webkit-text-stroke: 2px #fff;}
         
         @keyframes popFast { 
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-15deg); } 
-            50% { opacity: 1; transform: translate(-50%, -60px) scale(1.5) rotate(10deg); } 
-            100% { opacity: 0; transform: translate(-50%, -100px) scale(2.0); filter: blur(5px); } 
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-10deg); } 
+            25% { opacity: 1; transform: translate(-50%, -60px) scale(1.5) rotate(10deg); } 
+            70% { opacity: 1; transform: translate(-50%, -65px) scale(1.1) rotate(0deg); filter: blur(0px); } 
+            100% { opacity: 0; transform: translate(-50%, -90px) scale(1.5); filter: blur(10px); } 
         }
         @keyframes popSlow { 
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-10deg); } 
-            15% { opacity: 1; transform: translate(-50%, -60px) scale(1.5) rotate(5deg); } 
-            70% { opacity: 1; transform: translate(-50%, -65px) scale(1.2) rotate(0deg); filter: blur(0px); } 
-            100% { opacity: 0; transform: translate(-50%, -100px) scale(2.0); filter: blur(10px); } 
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-5deg); } 
+            20% { opacity: 1; transform: translate(-50%, -60px) scale(1.4) rotate(5deg); } 
+            80% { opacity: 1; transform: translate(-50%, -65px) scale(1.2) rotate(0deg); filter: blur(0px); } 
+            100% { opacity: 0; transform: translate(-50%, -100px) scale(1.8); filter: blur(10px); } 
         }
 
         /* オーバーレイ */
@@ -168,7 +167,7 @@
         .sponsor-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;}
 
         /* =========================================
-           4. PC用レイアウト（強固なGrid設計）
+           4. PC用強固なGridレイアウト
         ========================================= */
         @media (min-width: 800px) {
             #mobile-header { display: none !important; }
@@ -226,8 +225,8 @@
             <div class="setting-box">
                 <label>計算のレベル (即時変更)</label>
                 <select id="config-level">
-                    <option value="1">Lv1: 1桁の 足し算 (例: 3+5)</option>
-                    <option value="2">Lv2: 1桁の 引き算 (例: 8-3)</option>
+                    <option value="1">Lv1: 1桁の 足し算</option>
+                    <option value="2">Lv2: 1桁の 引き算</option>
                     <option value="3">Lv3: 1桁の かけ算 (九九)</option>
                     <option value="4">Lv4: 平方計算 (11〜19の2乗)</option>
                     <option value="5">Lv5: 2桁 × 1桁の かけ算</option>
@@ -313,15 +312,16 @@
 
                 <div id="overlay-gameover" class="overlay-screen">
                     <h2 style="color:#f43f5e; font-size:36px; margin:0;">GAME OVER</h2>
-                    <div style="margin: 15px 0; padding: 10px; background: rgba(0,0,0,0.8); border: 2px dashed #facc15; border-radius: 8px; text-align: center;">
-                        <span style="color:#fff; font-size:14px;">あなたの頭脳レベルは...</span><br>
-                        <span id="percentile-text" style="color:#facc15; font-size:24px; font-weight:bold;">上位 ??％</span>
+                    <div style="margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.8); border: 2px dashed #facc15; border-radius: 8px; text-align: center; width:90%; box-sizing:border-box;">
+                        <span style="color:#fff; font-size:14px; font-weight:bold;">あなたの認定レベルは...</span><br>
+                        <span id="percentile-text" style="color:#facc15; font-size:28px; font-weight:900; display:block; margin:5px 0;">Lv. ?? (称号)</span>
+                        <span id="next-level-text" style="color:#4ade80; font-size:12px; font-weight:bold;">次の称号まであと ?? 点！</span>
                     </div>
-                    <div style="display: flex; gap: 10px; width: 100%; margin-top:10px;">
+                    <div style="display: flex; gap: 10px; width: 90%; margin-top:10px;">
                         <button class="btn-secondary" style="flex:1; background:#000; border-color:#333; margin:0;" onclick="Viral.shareX()">𝕏 で自慢</button>
                         <button class="btn-secondary" style="flex:1; background:#06c755; border-color:#05a546; margin:0;" onclick="Viral.shareLINE()">LINE で送る</button>
                     </div>
-                    <button class="btn-primary" style="width:100%; margin-top:20px;" onclick="UI.openMenu()">メニューにもどる</button>
+                    <button class="btn-primary" style="width:90%; margin-top:20px;" onclick="UI.openMenu()">メニューにもどる</button>
                 </div>
             </div>
         </div>
@@ -575,7 +575,7 @@ const UI = {
     openTutorial() { document.getElementById('overlay-tutorial').classList.add('is-active'); },
     closeTutorial() { document.getElementById('overlay-tutorial').classList.remove('is-active'); },
     
-    // 💡 邪魔にならない超高速・巨大メガポップアップ切り替え機能
+    // 💡 邪魔にならない超高速メガポップアップ切り替え
     showMegaPop(mainText, subText, color, speedClass = 'play-fast') {
         const wrap = document.getElementById('mega-pop-wrapper');
         document.getElementById('mega-pop-main').innerText = mainText; document.getElementById('mega-pop-main').style.color = color;
@@ -623,7 +623,7 @@ const MathInput = {
     submitPC(e) {
         if(e) e.preventDefault();
         
-        // 💡 入力後のカーソル居座りを強制排除
+        // 💡 入力後のカーソル居座りを強制排除（PCでブロックが動かないバグの完全対策）
         const active = document.activeElement;
         if(active) active.blur();
         window.focus();
@@ -708,13 +708,14 @@ const Game = {
     interval: null, speedMs: 1000, speedLevel: 5,
     curPiece: null, nxtPiece: null, hideNext: false,
     timerAnim: null, startTime: 0, timeLimit: 0,
+    isAnimating: false, 
     
     startNew(forceReset = false) {
         AudioSys.wakeUp();
         if(forceReset) Sys.storageRemove('block_puzzle_save');
         
         this.board = Array.from({length: 18}, () => Array(9).fill(0));
-        this.score = 0; this.mathCombo = 0;
+        this.score = 0; this.mathCombo = 0; this.isAnimating = false;
         document.getElementById('overlay-gameover').classList.remove('is-active');
         UI.updateScore(0);
         
@@ -738,7 +739,7 @@ const Game = {
             document.getElementById('config-speed').value = data.speed || "5";
         } catch(e) { return this.startNew(true); }
         
-        this.mathCombo = 0;
+        this.mathCombo = 0; this.isAnimating = false;
         document.getElementById('overlay-gameover').classList.remove('is-active');
         UI.updateScore(this.score);
         
@@ -798,9 +799,9 @@ const Game = {
         if(lv === 16) lv = Math.floor(Math.random() * 15) + 1;
         
         switch(lv) {
-            case 1: // 💡 レベル1: 1桁の足し算のみ
+            case 1: 
                 n1=Math.floor(Math.random()*9)+1; n2=Math.floor(Math.random()*9)+1; ans=n1+n2; pStr=`${n1} ＋ ${n2} = ?`; break;
-            case 2: // 💡 レベル2: 1桁の引き算のみ（必ずプラスになる）
+            case 2: 
                 let a=Math.floor(Math.random()*9)+1; let b=Math.floor(Math.random()*9)+1; n1=Math.max(a,b); n2=Math.min(a,b); ans=n1-n2; pStr=`${n1} － ${n2} = ?`; break;
             case 3: n1=Math.floor(Math.random()*9)+1; n2=Math.floor(Math.random()*9)+1; ans=n1*n2; pStr=`${n1} × ${n2} = ?`; break;
             case 4: n1=Math.floor(Math.random()*9)+11; ans=n1*n1; pStr=`${n1}² = ?`; break;
@@ -858,6 +859,7 @@ const Game = {
         
         this.score += pts; UI.updateScore(this.score); AudioSys.play('correct');
         
+        // 💡 ポップアップは一瞬で消す（play-fast）
         if(this.mathCombo >= 2) {
             document.getElementById('combo-msg-text').innerText = `🔥 ${this.mathCombo} COMBO! (x${multi})`;
             UI.showMegaPop(`${this.mathCombo} COMBO!`, `+${pts}`, "var(--accent-gold)", "play-fast");
@@ -889,6 +891,7 @@ const Game = {
         const box = document.getElementById('math-box');
         box.classList.remove('error-shake'); void box.offsetWidth; box.classList.add('error-shake');
         
+        // 💡 ポップアップは一瞬で消す
         UI.showMegaPop(isTimeout ? "TIME UP!" : "MISS...", `-${pen}`, "var(--accent-pink)", "play-fast");
         
         this.hideNext = true; CanvasSys.renderNext(this.nxtPiece, this.hideNext);
@@ -917,7 +920,7 @@ const Game = {
     },
 
     drop() {
-        if (UI.state !== 'TETRIS') return;
+        if (UI.state !== 'TETRIS' || this.isAnimating) return;
         if (!this.collide(this.curPiece.x, this.curPiece.y + 1, this.curPiece.shape)) {
             this.curPiece.y++; CanvasSys.renderAll(this.board, this.curPiece);
         } else {
@@ -933,20 +936,21 @@ const Game = {
         
         Sys.storageSet('block_puzzle_save', JSON.stringify({ board: this.board, score: this.score, level: document.getElementById('config-level').value, speed: document.getElementById('config-speed').value }));
         
-        // 💡 順番に連鎖していく新しいブロック破壊システムを呼び出す（エラー時はfinallyで必ず問題を出す）
+        // 💡 連鎖システムを呼び出し（finallyで必ず次の問題へ行く絶対保証）
         this.processChains().catch(e => console.error(e)).finally(() => {
+            this.isAnimating = false; // ロック解除
             this.generateProblem(); // 💡 全て終わったら「必ず」次の計算問題へ！
         });
     },
 
     // 💡 ユーザー熱狂：ゆっくり光って順番に壊れていく「快感」連鎖システム
     async processChains() {
+        this.isAnimating = true; // アニメーション中は操作をロック
         let lineCombo = 0;
         let clearedLinesTotal = 0;
         
         while(true) {
             let linesToClear = [];
-            // 揃っている行を下から探す
             for (let r = 17; r >= 0; r--) {
                 let isFull = true;
                 for (let c = 0; c < 9; c++) {
@@ -955,10 +959,8 @@ const Game = {
                 if (isFull) linesToClear.push(r);
             }
             
-            // 揃っている行がなくなったらループ完全終了
             if (linesToClear.length === 0) break;
             
-            // 💡 一番下の行を1つだけピックアップして処理する
             let targetRow = linesToClear[0]; 
 
             // 【快感演出 1】消える前に一瞬「真っ白」に発光させる
@@ -967,8 +969,8 @@ const Game = {
             }
             CanvasSys.renderAll(this.board, null);
 
-            // 光った状態で 0.6秒 じっくり見せる（ここが快感ポイント！）
-            await new Promise(res => setTimeout(res, 600)); 
+            // 光った状態で 0.5秒 じっくり見せる
+            await new Promise(res => setTimeout(res, 500)); 
 
             // 【快感演出 2】パーティクルを出して行を削除する
             for (let c = 0; c < 9; c++) {
@@ -980,16 +982,13 @@ const Game = {
             this.board.unshift(Array(9).fill(0));
             CanvasSys.renderAll(this.board, null);
 
-            // スコアと音程の計算
             let pts = 100 * this.speedLevel * (lineCombo + 1);
             this.score += pts;
             UI.updateScore(this.score);
 
-            // ピッチが上がっていくド派手なビッグバンサウンド
             AudioSys.play('bigbang', lineCombo);
             Sys.vibrate(100);
             
-            // 画面を揺らす
             const cw = document.getElementById('canvas-wrapper');
             cw.classList.remove('screen-shake'); void cw.offsetWidth; cw.classList.add('screen-shake');
             
@@ -999,23 +998,8 @@ const Game = {
             lineCombo++;
             clearedLinesTotal++;
             
-            await new Promise(res => setTimeout(res, 200)); 
-
-            // 💡 さらに空いた隙間があれば、浮いているブロックを重力で詰める（ぷよぷよ式落下）
-            for (let c = 0; c < 9; c++) {
-                let emp = 17;
-                for (let r = 17; r >= 0; r--) {
-                    if (this.board[r][c] !== 0) {
-                        if (r !== emp) {
-                            this.board[emp][c] = this.board[r][c];
-                            this.board[r][c] = 0;
-                        }
-                        emp--;
-                    }
-                }
-            }
-            CanvasSys.renderAll(this.board, null);
-            await new Promise(res => setTimeout(res, 200));
+            // 💡 マシンガンのような連鎖感にするため短縮
+            await new Promise(res => setTimeout(res, 120)); 
         }
 
         if (clearedLinesTotal > 1) {
@@ -1023,30 +1007,44 @@ const Game = {
         }
     },
 
+    // 💡 行動心理学「ニアミス」を取り入れたゲームオーバー
     triggerGameOver() {
         this.pause(); UI.state = 'GAMEOVER'; Sys.storageRemove('block_puzzle_save');
-        let pct = 99; if(this.score > 20000) pct = 1; else if(this.score > 5000) pct = 5; else if(this.score > 1000) pct = 15; else if(this.score > 100) pct = 35;
-        document.getElementById('percentile-text').innerText = `上位 ${pct}％`;
+        
+        let lvNum = 1; let title = "ひよっこ🌱"; let nextScore = 500;
+        if(this.score >= 20000) { lvNum = 99; title = "伝説の神脳👑"; nextScore = null; }
+        else if(this.score >= 5000) { lvNum = 50; title = "パズル達人🔥"; nextScore = 20000; }
+        else if(this.score >= 1000) { lvNum = 25; title = "熟練プレイヤー✨"; nextScore = 5000; }
+        else if(this.score >= 500) { lvNum = 10; title = "見習い卒業👍"; nextScore = 1000; }
+        else { lvNum = Math.max(1, Math.floor(this.score / 50)); title = "ルーキー🌱"; nextScore = 500; }
+
+        document.getElementById('percentile-text').innerText = `Lv.${lvNum} (${title})`;
+        
+        if(nextScore) {
+            document.getElementById('next-level-text').innerText = `💡 次の称号まで あと ${nextScore - this.score} 点！`;
+        } else {
+            document.getElementById('next-level-text').innerText = `🎉 カンスト達成！あなたは天才です！`;
+        }
+
         document.getElementById('overlay-gameover').classList.add('is-active');
         UI.update(); Ranking.save(this.score);
     }
 };
 
-// 8. リアルタイム「レベル」変更（即時対応）
+// 8. リアルタイム「レベル」変更（即時反映）
 document.getElementById('config-level').addEventListener('change', () => {
     Ranking.load();
     if(UI.state === 'MATH' || UI.state === 'TETRIS') {
         MathInput.answer = NaN;
         let wasPaused = (document.getElementById('left-sidebar').classList.contains('is-active'));
         
-        Game.generateProblem(); 
+        Game.generateProblem(); // 即座に新しい問題に切り替え
         
-        // メニューを開いたままならポーズ状態に戻す
         if (wasPaused) Game.pause();
     }
 });
 
-// 💡 リアルタイム「タイムボーナス」＆「スピード」変更（即時対応）
+// 💡 リアルタイム「タイムボーナス」＆「スピード」変更（即時反映）
 document.getElementById('config-time').addEventListener('change', () => {
     Game.applySettings();
     if(UI.state === 'MATH') {
@@ -1074,12 +1072,12 @@ const Action = {
     timer: null,
     start(act, isForce = false, e) {
         if(e) e.preventDefault(); AudioSys.wakeUp();
-        if(UI.state !== 'TETRIS') return;
+        if(UI.state !== 'TETRIS' || Game.isAnimating) return; // 💡 アニメーション中は操作を弾く
         this.doAct(act); if(!isForce) this.timer = setInterval(() => this.doAct(act), 120);
     },
     stop(e) { if(e) e.preventDefault(); if(this.timer) clearInterval(this.timer); },
     doAct(act) {
-        if(UI.state !== 'TETRIS') return;
+        if(UI.state !== 'TETRIS' || Game.isAnimating) return;
         if(act === 'left' && !Game.collide(Game.curPiece.x-1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x--; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'right' && !Game.collide(Game.curPiece.x+1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'drop' && !Game.collide(Game.curPiece.x, Game.curPiece.y+1, Game.curPiece.shape)) { Game.curPiece.y++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
@@ -1115,9 +1113,9 @@ document.addEventListener('keydown', (e) => {
 // 10. バイラル・ランキング
 const Viral = {
     getText() {
-        let lv = document.getElementById('config-level').options[document.getElementById('config-level').selectedIndex].text;
-        let t = Game.score > 20000 ? "神脳👑" : (Game.score > 5000 ? "達人🔥" : (Game.score > 1000 ? "熟練者✨" : "挑戦者🌱"));
-        return encodeURIComponent(`【挑戦者求む🔥】\nブロック計算パズルで称号「${t}」を獲得！\nスコア: ${Number(Game.score).toLocaleString()}点 (レベル: ${lv})\n\n私を超えられるかな？😏👇\n#ブロック計算パズル #脳トレ`);
+        let curLv = document.getElementById('config-level').options[document.getElementById('config-level').selectedIndex].text;
+        let titleInfo = document.getElementById('percentile-text').innerText;
+        return encodeURIComponent(`【挑戦者求む🔥】\nブロック計算パズルで認定レベル「${titleInfo}」を獲得しました！\nスコア: ${Number(Game.score).toLocaleString()}点 (難易度: ${curLv})\n\n私を超えられるかな？😏👇\n#ブロック計算パズル #脳トレ`);
     },
     shareX() { window.open(`https://twitter.com/intent/tweet?text=${this.getText()}&url=${encodeURIComponent(window.location.href)}`, '_blank'); },
     shareLINE() { window.open(`https://line.me/R/msg/text/?${this.getText()}%0A${encodeURIComponent(window.location.href)}`, '_blank'); }
@@ -1154,7 +1152,6 @@ function updateSponsors() {
     const slots = window.innerWidth < 800 ? 1 : 3;
     for (let i = 0; i < slots; i++) {
         let el = document.createElement('a'); el.className = 'sponsor-box'; el.target = "_blank";
-        // ★あなたのメールアドレスに変更してください
         el.href = "mailto:murotsuyoshi0603@gmail.com?subject=【スポンサー応募】ブロック計算パズル";
         el.innerHTML = `<div class="sponsor-tag">広告</div><div style="color:var(--accent-gold); font-weight:900; font-size:16px;">🌟 スポンサー大募集！</div><div style="color:#94a3b8; font-size:10px;">ここをタップして連絡</div>`;
         container.appendChild(el);
