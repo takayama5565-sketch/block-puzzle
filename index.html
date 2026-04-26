@@ -11,12 +11,13 @@
     <script>
     /* ==========================================================================
        🌟【設定エリア】ここだけ書き換えてください🌟
+       ※段落やスペースの空け方は適当で大丈夫です。記号だけ消さないようにご注意ください。
     ========================================================================== */
     
-    // 1. あなたの短縮URL（LINEやXのシェア用）※入力済みです！
+    // 1. あなたの短縮URL（LINEやXのシェア用）
     const APP_SHARE_URL = "https://bit.ly/4mQXmf6";
 
-    // 2. Firebaseの設定（下の「const firebaseConfig = {」から「};」までを、いつも通り丸ごと上書きしてください）
+    // 2. Firebaseの設定（下の const から }; までを、ご自身のものに上書きしてください）
 const firebaseConfig = {
   apiKey: "AIzaSyDPMTQWtywKFLKHB4wNpCqLV2BsOJedFbc",
   authDomain: "mathtetris-b53e6.firebaseapp.com",
@@ -74,7 +75,7 @@ const firebaseConfig = {
         }
         #canvas-wrapper {
             position: relative; height: 100%; aspect-ratio: 1/2; max-width: 100%;
-            border: 3px solid var(--accent-blue); border-radius: 8px; box-shadow: 0 0 15px rgba(56,189,248,0.2);
+            border: 3px solid var(--accent-blue); border-radius: 8px; box-shadow: 0 0 20px rgba(56,189,248,0.15);
             background-color: #020617; overflow: hidden;
         }
         .screen-shake { animation: shakeHard 0.2s cubic-bezier(.36,.07,.19,.97) both; }
@@ -82,7 +83,7 @@ const firebaseConfig = {
 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         #particleCanvas { z-index: 5; pointer-events: none; }
-        #next-box { position: absolute; top: 5px; right: 5px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid var(--accent-blue); border-radius: 8px; z-index: 6; display: flex; justify-content: center; align-items: center;}
+        #next-box { position: absolute; top: 5px; right: 5px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid var(--accent-blue); border-radius: 8px; z-index: 6; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 10px rgba(0,0,0,0.5);}
 
         #right-sidebar {
             flex: 0 0 auto; display: flex; flex-direction: column;
@@ -92,7 +93,7 @@ const firebaseConfig = {
 
         .setting-box { margin-bottom: 12px; }
         .setting-box label { display: block; font-size: 13px; color: var(--accent-blue); margin-bottom: 4px; font-weight: bold;}
-        .setting-box select { width: 100%; padding: 12px; background: var(--btn-bg); color: #fff; border: 2px solid var(--btn-border); border-radius: 8px; font-size: 15px; font-weight: bold; outline: none;}
+        .setting-box select { width: 100%; padding: 12px; background: var(--btn-bg); color: #fff; border: 2px solid var(--btn-border); border-radius: 8px; font-size: 15px; font-weight: bold; outline: none; cursor:pointer;}
 
         .btn-primary { width: 100%; padding: 16px; background: #a855f7; color: #fff; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; margin-bottom: 10px; box-shadow: 0 4px 0 #7e22ce; cursor: pointer; transition: 0.1s;}
         .btn-primary:active { transform: translateY(4px); box-shadow: 0 0 0 #7e22ce; }
@@ -108,7 +109,8 @@ const firebaseConfig = {
         .status-msg { text-align: center; color: var(--accent-blue); font-weight: bold; font-size: 14px; margin-bottom: 5px; height: 20px;}
         .timer-bar { width: 100%; height: 6px; background: var(--btn-bg); border-radius: 3px; margin-bottom: 8px; overflow: hidden; display: none;}
         .timer-fill { height: 100%; width: 100%; background: var(--accent-green); transition: width 0.1s linear;}
-        .math-container { display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); border: 2px dashed var(--accent-gold); border-radius: 12px; padding: 10px; margin-bottom: 10px;}
+        .math-container { display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); border: 2px dashed var(--accent-gold); border-radius: 12px; padding: 10px; margin-bottom: 10px; transition: border-color 0.2s;}
+        .math-container.correct-glow { border-color: var(--accent-green); background: rgba(74, 222, 128, 0.1); }
         .math-question { font-size: 28px; font-weight: bold; color: var(--accent-gold); letter-spacing: 2px;}
         .math-answer { font-size: 28px; font-weight: bold; color: #fff; background: var(--btn-bg); padding: 5px 15px; border-radius: 8px; min-width: 80px; text-align: right; border: 2px solid var(--btn-border); height: 45px; line-height: 45px;}
 
@@ -120,7 +122,7 @@ const firebaseConfig = {
         .numpad-btn.zero { grid-column: span 2; }
 
         #puzzle-ui { display: none; flex-direction: column; width: 100%; max-width: 500px; margin: 0 auto;}
-        .puzzle-status { color: var(--accent-green); font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;}
+        .puzzle-status { color: var(--accent-green); font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px; text-shadow: 0 0 5px rgba(74,222,128,0.5);}
         .puzzle-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;}
         .ctrl-btn { background: var(--bg-panel); color: var(--accent-blue); border: 3px solid var(--accent-blue); border-radius: 12px; font-size: 32px; font-weight: bold; height: 55px; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 0 #0284c7; transition: 0.05s;}
         .ctrl-btn:active, .ctrl-btn.key-active { transform: translateY(6px); box-shadow: 0 0 0 #0284c7; background: var(--accent-blue); color: #000;}
@@ -138,6 +140,7 @@ const firebaseConfig = {
         .error-shake { animation: errShake 0.4s cubic-bezier(.36,.07,.19,.97) both; background-color: #e11d48 !important; border-color: #fff !important;}
         @keyframes errShake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
         
+        /* 💡 メガポップアップ */
         .mega-pop { 
             position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.1); 
             opacity: 0; pointer-events: none; z-index: 10000; text-align: center; white-space: nowrap; 
@@ -176,6 +179,9 @@ const firebaseConfig = {
         .sponsor-tag { position: absolute; top: 0; left: 0; background: rgba(0,0,0,0.6); color: #fff; font-size: 8px; padding: 2px 4px; border-bottom-right-radius: 4px; z-index: 2;}
         .sponsor-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0;}
 
+        /* =========================================
+           4. PC用 Gridレイアウト
+        ========================================= */
         @media (min-width: 800px) {
             #mobile-header { display: none !important; }
             #main-area { 
@@ -406,24 +412,26 @@ const firebaseConfig = {
 
 <script>
 /* ==========================================================================
-   絶対にエラーを起こさない・完全マスターJSコード
+   🎮 ゲームメインシステム（ここから下は絶対に書き換えないでください！）
 ========================================================================== */
 
-// 💡 セーフティ機能：設定が間違っていたら赤い画面を出す
+// 💡 監視カメラ（エラー保護システム）の完全修正版
 window.addEventListener('load', () => {
-    if (typeof USER_CONFIG === 'undefined' || typeof firebaseConfig === 'undefined' || !document.getElementById('btn-group-playing') || !document.getElementById('overlay-name-entry')) {
+    // 古い設定名や、記号の消し忘れがないかチェック
+    if (typeof firebaseConfig === 'undefined' || typeof APP_SHARE_URL === 'undefined' || !firebaseConfig.apiKey || !document.getElementById('btn-group-playing')) {
         document.body.innerHTML = `
             <div style="padding: 40px 20px; color: white; background: #e11d48; height: 100vh; text-align: center; box-sizing: border-box; overflow-y: auto;">
-                <h1 style="font-size: 30px; font-weight: 900; margin-bottom: 20px;">⚠️ 重大なエラーを発見しました！</h1>
+                <h1 style="font-size: 30px; font-weight: 900; margin-bottom: 20px;">⚠️ 設定エラーです！</h1>
                 <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 10px; text-align: left; max-width: 600px; margin: 0 auto;">
                     <p style="font-size: 18px; line-height: 1.8; margin-top: 0;">
-                        古いコードの残骸があるか、一番上の<strong>【設定エリア】</strong>を書き換える際に、<br>
-                        <strong>「"」（ダブルクォーテーション）</strong>や<strong>「,」（カンマ）</strong>などの記号を誤って消してしまっています。
+                        一番上の<strong>【設定エリア】</strong>を書き換える際に、<br>
+                        <strong>「"」（ダブルクォーテーション）</strong>や<strong>「,」（カンマ）</strong>などの記号を誤って消してしまっているか、<br>
+                        「const firebaseConfig = {」という文字自体を消してしまっています。
                     </p>
                     <p style="font-size: 18px; line-height: 1.8; color: #facc15; font-weight: bold;">
                         【解決方法】<br>
                         1. エディタのコードを「Ctrl + A」ですべて選択し、「Delete」で完全に空っぽにしてください。<br>
-                        2. もう一度新しいコードを貼り付け、慎重に設定だけを書き換えてください。
+                        2. もう一度新しいコードを貼り付け、慎重にAPIキーの文字の「中身だけ」を書き換えてください。
                     </p>
                 </div>
             </div>
@@ -475,9 +483,7 @@ const AudioSys = {
     wakeUp() {
         if(this.isMuted) return;
         try {
-            if (!this.ctx) {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
             if (this.ctx.state === 'suspended') {
                 this.ctx.resume().then(() => {
                     if (!this.keepAlive) {
@@ -596,6 +602,10 @@ const UI = {
 
             if (this.state === 'MATH') {
                 document.getElementById('math-ui').style.display = 'flex';
+                // 💡 視覚的フィードバック（問題が新しくなった時に少し光る）
+                const box = document.getElementById('math-box');
+                box.classList.add('correct-glow'); setTimeout(() => box.classList.remove('correct-glow'), 200);
+
                 if(window.innerWidth >= 800 && inputReal) {
                     inputReal.disabled = false; btnReal.disabled = false;
                     setTimeout(() => inputReal.focus(), 50);
@@ -713,7 +723,10 @@ const CanvasSys = {
             this.ctx.globalAlpha = 0.2;
             curPiece.shape.forEach((row, y) => row.forEach((val, x) => { if(val) this.drawSquare(this.ctx, curPiece.x + x, ghostY + y, curPiece.type); }));
             this.ctx.globalAlpha = 1.0;
+            // 💡 落下中のブロックを光らせて高級感を出す
+            this.ctx.shadowBlur = 10; this.ctx.shadowColor = "rgba(255,255,255,0.5)";
             curPiece.shape.forEach((row, y) => row.forEach((val, x) => { if(val) this.drawSquare(this.ctx, curPiece.x + x, curPiece.y + y, curPiece.type); }));
+            this.ctx.shadowBlur = 0;
         }
     },
     
@@ -737,8 +750,11 @@ const CanvasSys = {
     animParticles() {
         this.pCtx.clearRect(0, 0, 270, 540);
         
-        if(Math.random() < 0.1 && (UI.state === 'MATH' || UI.state === 'TETRIS')) {
-            this.particles.push({ x: Math.random()*270, y: 540, vx: (Math.random()-0.5)*1, vy: -Math.random()*2-1, life: 0.5, color: '#ffffff', size: Math.random()*2+1 });
+        // 💡 宇宙空間のようなアンビエント・パーティクル（コンボ中は量と速度アップ）
+        let pChance = Game.mathCombo > 0 ? 0.2 : 0.05;
+        let pSpeed = Game.mathCombo > 0 ? 3 : 1;
+        if(Math.random() < pChance && (UI.state === 'MATH' || UI.state === 'TETRIS')) {
+            this.particles.push({ x: Math.random()*270, y: 540, vx: (Math.random()-0.5)*1, vy: -Math.random()*pSpeed-1, life: 0.5, color: '#ffffff', size: Math.random()*2+1 });
         }
 
         for(let i=this.particles.length-1; i>=0; i--) {
@@ -1032,6 +1048,12 @@ const Game = {
         if (clearedLinesTotal > 1) {
             if(clearedLinesTotal > this.maxCombo) this.maxCombo = clearedLinesTotal;
             document.getElementById('combo-display').innerText = `🔥 ${clearedLinesTotal} LINES COMBO!`;
+            
+            // 💡 プロの演出：4ライン同時消し（TETRIS）の特別ポップアップ！
+            if(clearedLinesTotal === 4) {
+                setTimeout(() => UI.showMegaPop("✨ FANTASTIC 4 LINES!! ✨", "SUPER BONUS!", "var(--accent-gold)", "play-slow"), 300);
+                this.score += 5000; UI.updateScore(this.score);
+            }
         }
     },
 
