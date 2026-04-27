@@ -61,6 +61,7 @@ const firebaseConfig = {
         .top-score { font-size: clamp(16px, 5vw, 24px); font-weight: 900; margin: 0; color: var(--accent-gold); transition: transform 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; text-align: right;}
         .menu-toggle-btn { background: var(--btn-bg); color: var(--accent-blue); border: 2px solid var(--accent-blue); border-radius: 6px; padding: 6px 12px; font-weight: bold; cursor: pointer; }
 
+        /* メインエリア */
         #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
 
         #left-sidebar {
@@ -125,7 +126,8 @@ const firebaseConfig = {
         .math-container { display: flex; justify-content: space-between; align-items: center; background: var(--bg-dark); border: 2px dashed var(--accent-gold); border-radius: 12px; padding: 10px; margin-bottom: 10px; transition: border-color 0.2s;}
         .math-container.correct-glow { border-color: var(--accent-green); background: rgba(74, 222, 128, 0.1); }
         .math-question { font-size: 28px; font-weight: bold; color: var(--accent-gold); letter-spacing: 2px;}
-        .math-answer { font-size: 28px; font-weight: bold; color: #fff; background: var(--btn-bg); padding: 5px 15px; border-radius: 8px; min-width: 80px; text-align: right; border: 2px solid var(--btn-border); height: 45px; line-height: 45px;}
+        .math-answer { font-size: 28px; font-weight: bold; color: #fff; background: var(--btn-bg); padding: 5px 15px; border-radius: 8px; min-width: 80px; text-align: right; border: 2px solid var(--btn-border); height: 45px; line-height: 45px; transition: background 0.1s;}
+        .math-answer.input-flash { background: #cbd5e1; color: #000; } /* 💡 入力時のフラッシュ演出 */
 
         #numpad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 500px; margin: 0 auto;}
         .numpad-btn { background: var(--btn-bg); color: #fff; border: 2px solid var(--btn-border); border-radius: 10px; font-size: 22px; font-weight: bold; height: 48px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 0 var(--bg-dark); cursor: pointer; transition: 0.05s;}
@@ -212,11 +214,11 @@ const firebaseConfig = {
             .math-container { flex-direction: column; padding: 30px 10px; gap: 20px; border-width: 4px;}
             #math-problem { font-size: 40px; }
             
-            /* 💡 formタグを廃止し、純粋なdivに（エンターキーのリロードバグ根絶） */
+            #math-input-display { width: 100%; text-align: center; height: 60px; line-height: 60px; font-size: 36px; cursor: default;}
             #real-input-container { display: flex !important; gap: 10px; width: 100%; margin-top: 10px;}
-            #pc-answer-box { flex: 1; padding: 15px; border-radius: 8px; font-size: 28px; text-align: center; font-weight: bold; border: 3px solid var(--btn-border); background: #fff; color: #000; width: 100%; box-sizing: border-box; height: 64px; display:flex; align-items:center; justify-content:center; cursor: default;}
+            #pc-answer-box { flex: 1; padding: 15px; border-radius: 8px; font-size: 28px; text-align: center; font-weight: bold; border: 3px solid var(--btn-border); background: #fff; color: #000; width: 100%; box-sizing: border-box; height: 64px; display:flex; align-items:center; justify-content:center; cursor: default; transition: background 0.1s;}
+            #pc-answer-box.input-flash { background: #cbd5e1; color: #000; }
             
-            /* 💡 PC用エンターキーと連動するボタンのアニメーション設定 */
             #answer-btn-real { width: 120px; background-color: var(--accent-blue); box-shadow: 0 5px 0 #0284c7; color: #000; font-weight: 900; font-size: 18px; border-radius: 8px; border: none; cursor: pointer; transition: 0.1s; height: 64px;}
             #answer-btn-real:active, .key-active-btn { transform: translateY(5px) !important; box-shadow: 0 0 0 #0284c7 !important; background-color: var(--accent-blue) !important;}
         }
@@ -427,7 +429,7 @@ window.addEventListener('load', () => {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             if (typeof firebase.analytics === 'function') firebase.analytics();
-            Ranking.injectLegend();
+            Ranking.injectLegend(); // 💡 初期化時に伝説の覇者を登録・修正
         }
     } catch(e) { console.error(e); }
     
@@ -488,6 +490,21 @@ const AudioSys = {
         if (this.isMuted) { btn.innerText = "🔇 音声オフ (タップでオン)"; btn.style.background = "#e11d48"; btn.style.borderColor = "#be123c"; } 
         else { btn.innerText = "🔊 音声オン (タップで消音)"; btn.style.background = "#475569"; btn.style.borderColor = "#334155"; }
     },
+    
+    // 💡 プロ専用：打鍵感の追加（ピッという音）
+    playBlip() {
+        if(this.isMuted || !this.ctx) return;
+        this.wakeUp();
+        try {
+            const time = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(1200, time);
+            gain.gain.setValueAtTime(0.05, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+            osc.start(time); osc.stop(time + 0.1);
+        } catch(e){}
+    },
+
     play(type, lineComboIndex = 0) {
         if(this.isMuted || !this.ctx) return;
         this.wakeUp();
@@ -595,29 +612,37 @@ window.addEventListener('resize', () => {
 const MathInput = {
     currentStr: "", answer: NaN,
     add(char) {
-        AudioSys.wakeUp(); if (UI.state !== 'MATH') return;
+        AudioSys.playBlip(); // 💡 打鍵音追加
+        if (UI.state !== 'MATH') return;
         if (char === '-' && this.currentStr.length > 0) return;
         if (char === '.' && this.currentStr.includes('.')) return;
         this.currentStr += char; this.render();
     },
     del() {
-        AudioSys.wakeUp(); if (UI.state !== 'MATH') return;
+        AudioSys.playBlip(); // 💡 打鍵音追加
+        if (UI.state !== 'MATH') return;
         this.currentStr = this.currentStr.slice(0, -1); this.render();
     },
     render() {
         document.getElementById('math-a-text').innerText = this.currentStr === "" ? "_" : this.currentStr;
         const pcBox = document.getElementById('pc-answer-box');
-        if(pcBox) pcBox.innerText = this.currentStr === "" ? "_" : this.currentStr;
+        if(pcBox) {
+            pcBox.innerText = this.currentStr === "" ? "_" : this.currentStr;
+            // 💡 視覚的フィードバック（フラッシュ）
+            pcBox.classList.remove('input-flash'); void pcBox.offsetWidth; pcBox.classList.add('input-flash');
+        }
+        
+        const spBox = document.getElementById('math-a-text');
+        if(spBox) {
+            spBox.classList.remove('input-flash'); void spBox.offsetWidth; spBox.classList.add('input-flash');
+        }
     },
     submitPC() {
-        // 💡 PCの「答える」ボタンが押された時の処理（Enterキーでもここが呼ばれます）
-        const active = document.activeElement;
-        if(active) active.blur();
-        window.focus();
         this.submit();
     },
     submit() {
-        AudioSys.wakeUp(); if (UI.state !== 'MATH' || this.currentStr === "") return;
+        if (UI.state !== 'MATH' || this.currentStr === "") return;
+        AudioSys.playBlip(); // 💡 打鍵音追加
         let numVal = parseFloat(this.currentStr);
         if (Math.abs(numVal - this.answer) < 0.0001) Game.handleCorrect();
         else Game.handleMiss();
@@ -730,7 +755,6 @@ const Game = {
         this.nxtPiece = this.genPiece(); this.generateProblem();
     },
     
-    // 💡 確実にPCでもスマホでもメニュー画面に戻る・完全リセット機能
     returnToMenu() {
         document.getElementById('overlay-gameover').classList.remove('is-active');
         document.getElementById('overlay-name-entry').classList.remove('is-active');
@@ -982,7 +1006,7 @@ const Game = {
             if(clearedLinesTotal > this.maxCombo) this.maxCombo = clearedLinesTotal;
             document.getElementById('combo-display').innerText = `🔥 ${clearedLinesTotal} LINES COMBO!`;
             if(clearedLinesTotal >= 4) {
-                setTimeout(() => UI.showMegaPop("✨ FANTASTIC !! ✨", "SUPER BONUS!", "var(--accent-gold)", "play-slow"), 300);
+                setTimeout(() => UI.showMegaPop("✨ FANTASTIC 4 LINES!! ✨", "SUPER BONUS!", "var(--accent-gold)", "play-slow"), 300);
                 this.score = Math.min(this.score + 5000, 999999999999);
                 UI.updateScore(this.score);
             }
@@ -1068,13 +1092,16 @@ const Action = {
     }
 };
 
-// 💡 完璧なキーボード連動（エンターキーの確実な動作と「答える」ボタンの視覚効果）
 document.addEventListener('keydown', (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-        if(UI.state === 'TETRIS' || UI.state === 'MATH') e.preventDefault(); 
+        if(UI.state === 'TETRIS' || (UI.state === 'MATH' && document.activeElement.id !== 'math-answer-real')) e.preventDefault(); 
     }
 
     if (UI.state === 'MATH') {
+        if (document.activeElement.id === 'math-answer-real') {
+            if(e.key === 'Enter') { document.getElementById('btn-num-ent')?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-ent')?.classList.remove('key-active'),100); }
+            return; 
+        }
         if (!isNaN(MathInput.answer)) {
             if(e.key >= '0' && e.key <= '9') { MathInput.add(e.key); document.getElementById('btn-num-'+e.key)?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-'+e.key)?.classList.remove('key-active'),100); }
             else if(e.key === '-' || e.key === 'Subtract') { MathInput.add('-'); document.getElementById('btn-num-min')?.classList.add('key-active'); setTimeout(()=>document.getElementById('btn-num-min')?.classList.remove('key-active'),100); }
@@ -1121,14 +1148,24 @@ const Viral = {
 const Ranking = {
     pendingScore: 0,
     
-    // 💡 伝説の覇者「神AK」の自動登録
+    // 💡 過去の「ぶっちぎりの覇者」を完全に消去し、「神AK」に上書き修正するプロの修復プログラム
     async injectLegend() {
         if(!db) return;
         try {
             const snap = await db.collection('ranks_level_14').get();
-            let exists = false;
-            snap.forEach(doc => { if(doc.data().name === '神AK') exists = true; });
-            if(!exists) {
+            let hasKami = false;
+            
+            snap.forEach(doc => {
+                let d = doc.data();
+                // 過去の「ぶっちぎりの覇者」を見つけたら即座に削除
+                if(d.name === 'ぶっちぎりの覇者') {
+                    db.collection('ranks_level_14').doc(doc.id).delete(); 
+                }
+                if(d.name === '神AK') hasKami = true;
+            });
+            
+            // 「神AK」がいなければ新しく 9999999 点で作成
+            if(!hasKami) {
                 await db.collection('ranks_level_14').add({ name: '神AK', score: 9999999, timestamp: new Date() });
             }
         } catch(e) {}
