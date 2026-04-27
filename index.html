@@ -49,7 +49,11 @@ const firebaseConfig = {
             user-select: none; -webkit-user-select: none;
         }
 
-        #app-container { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; }
+        #app-container { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; transition: box-shadow 0.2s;}
+        
+        /* 💡 オーバードライブ演出（3コンボ以上で画面全体が輝く） */
+        .overdrive-glow { animation: overDriveAnim 0.3s ease-out; }
+        @keyframes overDriveAnim { 0% { box-shadow: inset 0 0 0px var(--accent-gold); } 50% { box-shadow: inset 0 0 60px var(--accent-gold); } 100% { box-shadow: inset 0 0 0px var(--accent-gold); } }
 
         /* スマホヘッダー */
         #mobile-header {
@@ -127,7 +131,7 @@ const firebaseConfig = {
         .math-container.correct-glow { border-color: var(--accent-green); background: rgba(74, 222, 128, 0.1); }
         .math-question { font-size: 28px; font-weight: bold; color: var(--accent-gold); letter-spacing: 2px;}
         .math-answer { font-size: 28px; font-weight: bold; color: #fff; background: var(--btn-bg); padding: 5px 15px; border-radius: 8px; min-width: 80px; text-align: right; border: 2px solid var(--btn-border); height: 45px; line-height: 45px; transition: background 0.1s;}
-        .math-answer.input-flash { background: #cbd5e1; color: #000; } /* 💡 入力時のフラッシュ演出 */
+        .math-answer.input-flash { background: #cbd5e1; color: #000; } 
 
         #numpad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 500px; margin: 0 auto;}
         .numpad-btn { background: var(--btn-bg); color: #fff; border: 2px solid var(--btn-border); border-radius: 10px; font-size: 22px; font-weight: bold; height: 48px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 0 var(--bg-dark); cursor: pointer; transition: 0.05s;}
@@ -162,9 +166,6 @@ const firebaseConfig = {
         }
         .mega-pop.play-fast { animation: popFast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .mega-pop.play-slow { animation: popSlow 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        
-        .mega-pop .pop-main { font-size: clamp(50px, 15vw, 120px); font-weight: 900; font-style: italic; display: block; letter-spacing: 2px; -webkit-text-stroke: 3px #fff;}
-        .mega-pop .pop-sub { font-size: clamp(30px, 10vw, 80px); font-weight: 900; display: block; margin-top: 5px; -webkit-text-stroke: 2px #fff;}
         
         @keyframes popFast { 
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.1) rotate(-10deg); } 
@@ -208,6 +209,7 @@ const firebaseConfig = {
             
             #numpad, #puzzle-ui { display: none !important; }
             .pc-score-display { display: block !important; text-align: center; margin-bottom: 20px;}
+            /* 1兆点でもはみ出さない自動縮小設定 */
             .pc-score-display span { font-size: clamp(24px, 3.5vw, 42px); display: block; color: var(--accent-gold); font-weight: 900; line-height: 1.2; text-shadow: 0 0 15px rgba(250,204,21,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
             .pc-level-display { text-align: center; font-size: 14px; font-weight: bold; color: var(--accent-blue); margin-bottom: 20px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px;}
             
@@ -423,13 +425,17 @@ const firebaseConfig = {
 </div>
 
 <script>
+/* ==========================================================================
+   🎮 メインシステム
+========================================================================== */
+
 window.addEventListener('load', () => {
     try {
         if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "ここにあなたのAPIキー") {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             if (typeof firebase.analytics === 'function') firebase.analytics();
-            Ranking.injectLegend(); // 💡 初期化時に伝説の覇者を登録・修正
+            Ranking.injectLegend(); // 💡 神AKを登録＆古いデータを消去
         }
     } catch(e) { console.error(e); }
     
@@ -490,8 +496,6 @@ const AudioSys = {
         if (this.isMuted) { btn.innerText = "🔇 音声オフ (タップでオン)"; btn.style.background = "#e11d48"; btn.style.borderColor = "#be123c"; } 
         else { btn.innerText = "🔊 音声オン (タップで消音)"; btn.style.background = "#475569"; btn.style.borderColor = "#334155"; }
     },
-    
-    // 💡 プロ専用：打鍵感の追加（ピッという音）
     playBlip() {
         if(this.isMuted || !this.ctx) return;
         this.wakeUp();
@@ -504,7 +508,6 @@ const AudioSys = {
             osc.start(time); osc.stop(time + 0.1);
         } catch(e){}
     },
-
     play(type, lineComboIndex = 0) {
         if(this.isMuted || !this.ctx) return;
         this.wakeUp();
@@ -612,14 +615,14 @@ window.addEventListener('resize', () => {
 const MathInput = {
     currentStr: "", answer: NaN,
     add(char) {
-        AudioSys.playBlip(); // 💡 打鍵音追加
+        AudioSys.playBlip(); 
         if (UI.state !== 'MATH') return;
         if (char === '-' && this.currentStr.length > 0) return;
         if (char === '.' && this.currentStr.includes('.')) return;
         this.currentStr += char; this.render();
     },
     del() {
-        AudioSys.playBlip(); // 💡 打鍵音追加
+        AudioSys.playBlip(); 
         if (UI.state !== 'MATH') return;
         this.currentStr = this.currentStr.slice(0, -1); this.render();
     },
@@ -628,21 +631,22 @@ const MathInput = {
         const pcBox = document.getElementById('pc-answer-box');
         if(pcBox) {
             pcBox.innerText = this.currentStr === "" ? "_" : this.currentStr;
-            // 💡 視覚的フィードバック（フラッシュ）
             pcBox.classList.remove('input-flash'); void pcBox.offsetWidth; pcBox.classList.add('input-flash');
         }
-        
         const spBox = document.getElementById('math-a-text');
         if(spBox) {
             spBox.classList.remove('input-flash'); void spBox.offsetWidth; spBox.classList.add('input-flash');
         }
     },
     submitPC() {
+        const active = document.activeElement;
+        if(active) active.blur();
+        window.focus();
         this.submit();
     },
     submit() {
         if (UI.state !== 'MATH' || this.currentStr === "") return;
-        AudioSys.playBlip(); // 💡 打鍵音追加
+        AudioSys.playBlip(); 
         let numVal = parseFloat(this.currentStr);
         if (Math.abs(numVal - this.answer) < 0.0001) Game.handleCorrect();
         else Game.handleMiss();
@@ -869,6 +873,12 @@ const Game = {
         this.score = Math.min(this.score + pts, 999999999999);
         UI.updateScore(this.score); AudioSys.play('correct');
         
+        // 💡 3コンボ以上で画面フラッシュ（オーバードライブ演出）
+        if(this.mathCombo >= 3) {
+            const app = document.getElementById('app-container');
+            app.classList.remove('overdrive-glow'); void app.offsetWidth; app.classList.add('overdrive-glow');
+        }
+        
         if(this.mathCombo >= 2) {
             document.getElementById('combo-msg-text').innerText = `🔥 ${this.mathCombo} COMBO! (x${multi})`;
             UI.showMegaPop(`${this.mathCombo} COMBO!`, `+${pts}`, "var(--accent-gold)", "play-fast");
@@ -1006,22 +1016,55 @@ const Game = {
             if(clearedLinesTotal > this.maxCombo) this.maxCombo = clearedLinesTotal;
             document.getElementById('combo-display').innerText = `🔥 ${clearedLinesTotal} LINES COMBO!`;
             if(clearedLinesTotal >= 4) {
-                setTimeout(() => UI.showMegaPop("✨ FANTASTIC 4 LINES!! ✨", "SUPER BONUS!", "var(--accent-gold)", "play-slow"), 300);
+                setTimeout(() => UI.showMegaPop("✨ FANTASTIC !! ✨", "SUPER BONUS!", "var(--accent-gold)", "play-slow"), 300);
                 this.score = Math.min(this.score + 5000, 999999999999);
                 UI.updateScore(this.score);
             }
         }
     },
 
+    // 💡 16段階に細分化された新称号＆レベルシステム
     triggerGameOver() {
         this.pause(); UI.state = 'GAMEOVER'; Sys.storageRemove('block_puzzle_save');
         
-        let lvNum = 1; let title = "ひよっこ🌱"; let nextScore = 500;
-        if(this.score >= 999999999999) { lvNum = 99; title = "伝説の神脳👑"; nextScore = null; }
-        else if(this.score >= 5000) { lvNum = 50; title = "パズル達人🔥"; nextScore = 999999999999; }
-        else if(this.score >= 1000) { lvNum = 25; title = "熟練プレイヤー✨"; nextScore = 5000; }
-        else if(this.score >= 500) { lvNum = 10; title = "見習い卒業👍"; nextScore = 1000; }
-        else { lvNum = Math.max(1, Math.floor(this.score / 50)); title = "ルーキー🌱"; nextScore = 500; }
+        const rankData = [
+            { req: 100000000, title: "創造神🌌", lv: 99 },
+            { req: 9999999, title: "計算神AK👑✨", lv: 90 },
+            { req: 5000000, title: "究極の神脳👑", lv: 85 },
+            { req: 1000000, title: "伝説のパズラー🌟", lv: 80 },
+            { req: 500000, title: "神算鬼謀🔮", lv: 70 },
+            { req: 100000, title: "閃きの天才⚡", lv: 60 },
+            { req: 50000, title: "計算マスター⭐", lv: 55 },
+            { req: 30000, title: "パズル達人🔥", lv: 50 },
+            { req: 10000, title: "超ベテラン脳🧠", lv: 40 },
+            { req: 5000, title: "ベテラン脳🧠", lv: 35 },
+            { req: 2000, title: "熟練プレイヤー✨", lv: 30 },
+            { req: 1000, title: "一人前プレイヤー👍", lv: 25 },
+            { req: 500, title: "見習い卒業🎓", lv: 20 },
+            { req: 200, title: "ルーキー🔰", lv: 10 },
+            { req: 50, title: "計算の卵🐣", lv: 5 },
+            { req: 0, title: "ひよっこ🌱", lv: 1 }
+        ];
+
+        let title = "ひよっこ🌱";
+        let lvNum = 1;
+        let nextScore = 50;
+
+        for (let i = 0; i < rankData.length; i++) {
+            if (this.score >= rankData[i].req) {
+                title = rankData[i].title;
+                lvNum = rankData[i].lv;
+                if (i === 0) {
+                    nextScore = null;
+                } else {
+                    nextScore = rankData[i-1].req;
+                    let progress = (this.score - rankData[i].req) / (rankData[i-1].req - rankData[i].req);
+                    let lvDiff = rankData[i-1].lv - rankData[i].lv;
+                    lvNum += Math.floor(progress * lvDiff);
+                }
+                break;
+            }
+        }
 
         document.getElementById('final-score-text').innerText = Number(this.score).toLocaleString() + " 点";
         
@@ -1133,7 +1176,7 @@ const Viral = {
         let curLv = document.getElementById('config-level').options[document.getElementById('config-level').selectedIndex].text;
         let titleInfo = document.getElementById('percentile-text').innerText;
         let maxComboText = Game.maxCombo > 0 ? ` (最大 ${Game.maxCombo} コンボ！)` : "";
-        return encodeURIComponent(`【挑戦者求む🔥】\nブロック計算パズルで認定「${titleInfo}」を獲得しました！\nスコア: ${Number(Game.score).toLocaleString()}点${maxComboText}\n難易度: ${curLv}\n\n私を超えられるかな？😏👇\n#ブロック計算パズル #脳トレ`);
+        return encodeURIComponent(`【挑戦者求む🔥】\nブロック計算パズルで「${titleInfo}」を獲得しました！\nスコア: ${Number(Game.score).toLocaleString()}点${maxComboText}\n難易度: ${curLv}\n\n私を超えられるかな？😏👇\n#ブロック計算パズル #脳トレ`);
     },
     shareX() { 
         let url = (typeof APP_SHARE_URL !== 'undefined' && APP_SHARE_URL) ? APP_SHARE_URL : window.location.href;
@@ -1148,7 +1191,6 @@ const Viral = {
 const Ranking = {
     pendingScore: 0,
     
-    // 💡 過去の「ぶっちぎりの覇者」を完全に消去し、「神AK」に上書き修正するプロの修復プログラム
     async injectLegend() {
         if(!db) return;
         try {
@@ -1157,14 +1199,12 @@ const Ranking = {
             
             snap.forEach(doc => {
                 let d = doc.data();
-                // 過去の「ぶっちぎりの覇者」を見つけたら即座に削除
                 if(d.name === 'ぶっちぎりの覇者') {
                     db.collection('ranks_level_14').doc(doc.id).delete(); 
                 }
                 if(d.name === '神AK') hasKami = true;
             });
             
-            // 「神AK」がいなければ新しく 9999999 点で作成
             if(!hasKami) {
                 await db.collection('ranks_level_14').add({ name: '神AK', score: 9999999, timestamp: new Date() });
             }
