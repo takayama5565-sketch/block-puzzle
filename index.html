@@ -10,15 +10,14 @@
 
     <script>
     /* ==========================================================================
-       🌟【設定エリア】🌟 
+       🌟【設定エリア】🌟
+       ここだけを慎重に上書きしてください。記号（" や , など）は消さないように！
     ========================================================================== */
     
-    // 1. 短縮URL（LINEやXのシェア用）※入力済みです
+    // 1. 短縮URL（LINEやXのシェア用）
     const APP_SHARE_URL = "https://bit.ly/4mQXmf6";
 
-    // 🔽🔽🔽 ▼▼▼ ▼▼▼ ▼▼▼ ▼▼▼ ▼▼▼ ▼▼▼ 🔽🔽🔽
-    // 🌟🌟🌟 ここから下を貼り替えてください 🌟🌟🌟
-
+    // 2. Firebaseの設定
 const firebaseConfig = {
   apiKey: "AIzaSyDPMTQWtywKFLKHB4wNpCqLV2BsOJedFbc",
   authDomain: "mathtetris-b53e6.firebaseapp.com",
@@ -29,9 +28,7 @@ const firebaseConfig = {
   measurementId: "G-811HH3W7Y4"
 };
 
-    // 🌟🌟🌟 ここから上を貼り替えてください 🌟🌟🌟
-    // 🔼🔼🔼 ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ ▲▲▲ 🔼🔼🔼
-    
+    /* ========================================================================== */
     </script>
 
     <style>
@@ -60,7 +57,7 @@ const firebaseConfig = {
             z-index: 50; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         #mobile-header h1 { font-size: 18px; margin: 0; color: var(--accent-blue); font-weight: 900;}
-        .top-score { font-size: 24px; font-weight: 900; margin: 0; color: var(--accent-gold); transition: transform 0.1s;}
+        .top-score { font-size: 24px; font-weight: 900; margin: 0; color: var(--accent-gold); transition: transform 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; text-align: right;}
         .menu-toggle-btn { background: var(--btn-bg); color: var(--accent-blue); border: 2px solid var(--accent-blue); border-radius: 6px; padding: 6px 12px; font-weight: bold; cursor: pointer; }
 
         #main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
@@ -83,12 +80,19 @@ const firebaseConfig = {
             border: 3px solid var(--accent-blue); border-radius: 8px; box-shadow: 0 0 20px rgba(56,189,248,0.15);
             background-color: #020617; overflow: hidden;
         }
-        .screen-shake { animation: shakeHard 0.2s cubic-bezier(.36,.07,.19,.97) both; }
+        .screen-shake { animation: shakeHard 0.3s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shakeHard { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-5px, 5px); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-5px, -5px); } 80% { transform: translate(5px, 5px); } }
 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         #particleCanvas { z-index: 5; pointer-events: none; }
         #next-box { position: absolute; top: 5px; right: 5px; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid var(--accent-blue); border-radius: 8px; z-index: 6; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 10px rgba(0,0,0,0.5);}
+
+        #pause-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7); z-index: 7; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(3px);
+            color: var(--accent-gold); font-size: 36px; font-weight: 900; letter-spacing: 5px;
+        }
 
         #right-sidebar {
             flex: 0 0 auto; display: flex; flex-direction: column;
@@ -199,12 +203,13 @@ const firebaseConfig = {
             
             #numpad, #puzzle-ui { display: none !important; }
             .pc-score-display { display: block !important; text-align: center; margin-bottom: 20px;}
-            .pc-score-display span { font-size: 42px; display: block; color: var(--accent-gold); font-weight: 900; line-height: 1.2; text-shadow: 0 0 15px rgba(250,204,21,0.4);}
+            /* スコアが1兆点までいくため、文字サイズを自動調整 */
+            .pc-score-display span { font-size: clamp(20px, 4vw, 42px); display: block; color: var(--accent-gold); font-weight: 900; line-height: 1.2; text-shadow: 0 0 15px rgba(250,204,21,0.4); white-space: nowrap;}
             .pc-level-display { text-align: center; font-size: 14px; font-weight: bold; color: var(--accent-blue); margin-bottom: 20px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 4px;}
+            
             .math-container { flex-direction: column; padding: 30px 10px; gap: 20px; border-width: 4px;}
             #math-problem { font-size: 40px; }
             
-            /* PCの二重入力バグを物理的に防ぐための表示エリア */
             #math-input-display { width: 100%; text-align: center; height: 60px; line-height: 60px; font-size: 36px; cursor: default;}
             #real-input-container { display: flex !important; gap: 10px; width: 100%; margin-top: 10px;}
             #pc-answer-box { flex: 1; padding: 15px; border-radius: 8px; font-size: 28px; text-align: center; font-weight: bold; border: 3px solid var(--btn-border); background: #fff; color: #000; width: 100%; box-sizing: border-box; height: 64px;}
@@ -304,6 +309,7 @@ const firebaseConfig = {
                 <canvas id="gameCanvas" width="270" height="540"></canvas>
                 <canvas id="particleCanvas" width="270" height="540"></canvas>
                 <div id="next-box"><canvas id="nextCanvas" width="100%" height="100%"></canvas></div>
+                <div id="pause-overlay">⏸️ PAUSE</div>
             </div>
         </div>
 
@@ -350,11 +356,11 @@ const firebaseConfig = {
             <div id="puzzle-ui" style="display:none;">
                 <div class="puzzle-status">正解！ ブロックを動かそう</div>
                 <div class="puzzle-controls">
-                    <div class="ctrl-btn" id="btn-ctrl-left" onmousedown="Action.start('left')" onmouseup="Action.stop()" onmouseleave="Action.stop()" ontouchstart="Action.start('left', event)" ontouchend="Action.stop(event)">◀</div>
-                    <div class="ctrl-btn" id="btn-ctrl-drop" onmousedown="Action.start('drop')" onmouseup="Action.stop()" onmouseleave="Action.stop()" ontouchstart="Action.start('drop', event)" ontouchend="Action.stop(event)">▼</div>
-                    <div class="ctrl-btn" id="btn-ctrl-rotate" onmousedown="Action.start('rotate', true)" onmouseup="Action.stop()" ontouchstart="Action.start('rotate', true, event)" ontouchend="Action.stop(event)">↻</div>
-                    <div class="ctrl-btn" id="btn-ctrl-right" onmousedown="Action.start('right')" onmouseup="Action.stop()" onmouseleave="Action.stop()" ontouchstart="Action.start('right', event)" ontouchend="Action.stop(event)">▶</div>
-                    <div class="ctrl-btn ctrl-btn-drop" id="btn-ctrl-hard" onmousedown="Action.start('hardDrop', true)" ontouchstart="Action.start('hardDrop', true, event)">一気に落とす</div>
+                    <div class="ctrl-btn" id="btn-ctrl-left" onmousedown="Action.start('left', false, event)" onmouseup="Action.stop(event)" onmouseleave="Action.stop(event)" ontouchstart="Action.start('left', false, event)" ontouchend="Action.stop(event)">◀</div>
+                    <div class="ctrl-btn" id="btn-ctrl-drop" onmousedown="Action.start('drop', false, event)" onmouseup="Action.stop(event)" onmouseleave="Action.stop(event)" ontouchstart="Action.start('drop', false, event)" ontouchend="Action.stop(event)">▼</div>
+                    <div class="ctrl-btn" id="btn-ctrl-rotate" onmousedown="Action.start('rotate', true, event)" onmouseup="Action.stop(event)" ontouchstart="Action.start('rotate', true, event)" ontouchend="Action.stop(event)">↻</div>
+                    <div class="ctrl-btn" id="btn-ctrl-right" onmousedown="Action.start('right', false, event)" onmouseup="Action.stop(event)" onmouseleave="Action.stop(event)" ontouchstart="Action.start('right', false, event)" ontouchend="Action.stop(event)">▶</div>
+                    <div class="ctrl-btn ctrl-btn-drop" id="btn-ctrl-hard" onmousedown="Action.start('hardDrop', true, event)" ontouchstart="Action.start('hardDrop', true, event)">一気に落とす</div>
                 </div>
             </div>
         </div>
@@ -369,7 +375,7 @@ const firebaseConfig = {
         <div style="text-align:left; color:#fff; font-weight:bold; line-height:2.0; margin-bottom:25px; font-size:16px;">
             ① 計算問題を解く！<br><span style="color:var(--accent-blue); font-size:13px; display:block; padding-left:15px; margin-bottom:5px;">正解するとブロックが落ちます。</span>
             ② ブロックを操作する！<br><span style="color:var(--accent-green); font-size:13px; display:block; padding-left:15px; margin-bottom:5px;">横一列に並べると消えます。</span>
-            ③ 連続正解でコンボ！<br><span style="color:var(--accent-pink); font-size:13px; display:block; padding-left:15px;">解き続けると得点がUP！</span>
+            ③ 連続正解で大連鎖！<br><span style="color:var(--accent-pink); font-size:13px; display:block; padding-left:15px;">空いた隙間にブロックが落ちて連鎖！</span>
         </div>
         <button class="btn-primary" style="margin:0;" onclick="UI.closeTutorial()">わかった！</button>
     </div>
@@ -407,15 +413,19 @@ const firebaseConfig = {
 </div>
 
 <script>
+/* ==========================================================================
+   🎮 メインシステム（絶対に書き換えないでください！）
+========================================================================== */
+
 window.addEventListener('load', () => {
-    // 💡 エラーチェッカー（赤い画面）は完全に削除しました！安全に起動します。
     try {
         if (typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "ここにあなたのAPIキー") {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             if (typeof firebase.analytics === 'function') firebase.analytics();
+            Ranking.injectLegend(); // 💡 初期化時に伝説の覇者を登録
         }
-    } catch(e) {}
+    } catch(e) { console.error(e); }
     
     AudioSys.init();
     updateSponsors();
@@ -497,6 +507,12 @@ const AudioSys = {
                 osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, time);
                 gain.gain.setValueAtTime(0.8, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
                 osc.start(); osc.stop(time + 0.5);
+            } else if (type === 'harddrop') {
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(150, time); osc.frequency.exponentialRampToValueAtTime(30, time + 0.15);
+                gain.gain.setValueAtTime(1.5, time); gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+                osc.start(); osc.stop(time + 0.15);
             } else if (type === 'bigbang') {
                 const pitchUp = lineComboIndex * 60; const baseFreq = 100 + pitchUp; const noiseFreq = 1500 + (lineComboIndex * 400);
                 const subOsc = this.ctx.createOscillator(); const subGain = this.ctx.createGain();
@@ -526,6 +542,7 @@ const UI = {
         document.getElementById('btn-close-menu').style.display = 'none';
         document.getElementById('math-ui').style.display = 'none';
         document.getElementById('puzzle-ui').style.display = 'none';
+        document.getElementById('pause-overlay').style.display = 'none';
 
         if (this.state === 'INIT' || this.state === 'GAMEOVER') {
             if (Sys.storageGet('block_puzzle_save')) document.getElementById('btn-group-saved').style.display = 'block';
@@ -533,6 +550,7 @@ const UI = {
             if(window.innerWidth < 800 && this.state !== 'GAMEOVER') document.getElementById('left-sidebar').classList.add('is-active');
         } else if (this.state === 'PAUSED') {
             document.getElementById('btn-group-paused').style.display = 'block';
+            document.getElementById('pause-overlay').style.display = 'flex';
             if(window.innerWidth < 800) document.getElementById('btn-close-menu').style.display = 'block';
         } else if (this.state === 'MATH' || this.state === 'TETRIS') {
             if(window.innerWidth >= 800) document.getElementById('btn-group-playing').style.display = 'block';
@@ -556,8 +574,9 @@ const UI = {
         wrap.classList.remove('play-fast', 'play-slow'); void wrap.offsetWidth; wrap.classList.add(speedClass);
     },
     updateScore(val) {
+        const formatted = Number(val).toLocaleString();
         const sm = document.getElementById('score-text-mobile'); const sp = document.getElementById('score-text-pc');
-        sm.innerText = val; sp.innerText = val;
+        sm.innerText = formatted; sp.innerText = formatted;
         sm.classList.remove('score-pop'); void sm.offsetWidth; sm.classList.add('score-pop');
         sp.classList.remove('score-pop'); void sp.offsetWidth; sp.classList.add('score-pop');
     }
@@ -797,7 +816,8 @@ const Game = {
             if(remain > 0) pts += Math.floor((Math.floor(remain / 100) * this.speedLevel) * multi);
         }
         
-        this.score += pts; UI.updateScore(this.score); AudioSys.play('correct');
+        this.score = Math.min(this.score + pts, 999999999999); // 💡 最高得点カンスト対応
+        UI.updateScore(this.score); AudioSys.play('correct');
         
         if(this.mathCombo >= 2) {
             document.getElementById('combo-msg-text').innerText = `🔥 ${this.mathCombo} COMBO! (x${multi})`;
@@ -879,6 +899,7 @@ const Game = {
         });
     },
 
+    // 💡 新・重力システム（ぷよぷよ連鎖対応）
     async processChains() {
         this.isAnimating = true; 
         let lineCombo = 0; let clearedLinesTotal = 0;
@@ -894,21 +915,40 @@ const Game = {
             }
             if (linesToClear.length === 0) break;
             
-            let targetRow = linesToClear[0]; 
-
-            for (let c = 0; c < 9; c++) { this.board[targetRow][c] = 16; }
+            // 光る演出
+            for(let row of linesToClear) {
+                for (let c = 0; c < 9; c++) this.board[row][c] = 16; 
+            }
             CanvasSys.renderAll(this.board, null);
 
-            await new Promise(res => setTimeout(res, 500)); 
+            await new Promise(res => setTimeout(res, 400)); 
 
-            for (let c = 0; c < 9; c++) { CanvasSys.addParticles(c, targetRow, CanvasSys.COLORS[16], false); }
+            // パーティクル＆ブロック消去
+            for(let row of linesToClear) {
+                for (let c = 0; c < 9; c++) { 
+                    CanvasSys.addParticles(c, row, CanvasSys.COLORS[16], false); 
+                    this.board[row][c] = 0; 
+                }
+            }
 
-            this.board.splice(targetRow, 1);
-            this.board.unshift(Array(9).fill(0));
+            // 💡 浮いているブロックを「すべて下へ」落とす（カラムごとの重力）
+            for (let c = 0; c < 9; c++) {
+                let writePos = 17;
+                for (let r = 17; r >= 0; r--) {
+                    if (this.board[r][c] !== 0) {
+                        if (r !== writePos) {
+                            this.board[writePos][c] = this.board[r][c];
+                            this.board[r][c] = 0;
+                        }
+                        writePos--;
+                    }
+                }
+            }
             CanvasSys.renderAll(this.board, null);
 
-            let pts = 100 * this.speedLevel * (lineCombo + 1);
-            this.score += pts; UI.updateScore(this.score);
+            let pts = 100 * this.speedLevel * (lineCombo + 1) * linesToClear.length;
+            this.score = Math.min(this.score + pts, 999999999999);
+            UI.updateScore(this.score);
 
             AudioSys.play('bigbang', lineCombo); Sys.vibrate(100);
             
@@ -917,16 +957,18 @@ const Game = {
             
             UI.showMegaPop("CLEAR!", `+${pts}`, "var(--accent-blue)", "play-slow");
 
-            lineCombo++; clearedLinesTotal++;
-            await new Promise(res => setTimeout(res, 120)); 
+            lineCombo++; clearedLinesTotal += linesToClear.length;
+            await new Promise(res => setTimeout(res, 300)); // 重力落下の間をつくる
         }
 
         if (clearedLinesTotal > 1) {
             if(clearedLinesTotal > this.maxCombo) this.maxCombo = clearedLinesTotal;
             document.getElementById('combo-display').innerText = `🔥 ${clearedLinesTotal} LINES COMBO!`;
-            if(clearedLinesTotal === 4) {
-                setTimeout(() => UI.showMegaPop("✨ FANTASTIC 4 LINES!! ✨", "SUPER BONUS!", "var(--accent-gold)", "play-slow"), 300);
-                this.score += 5000; UI.updateScore(this.score);
+            // 💡 4ライン同時消し（テトリス）ボーナス
+            if(clearedLinesTotal >= 4) {
+                setTimeout(() => UI.showMegaPop("✨ FANTASTIC !! ✨", "SUPER BONUS!", "var(--accent-gold)", "play-slow"), 300);
+                this.score = Math.min(this.score + 5000, 999999999999);
+                UI.updateScore(this.score);
             }
         }
     },
@@ -935,8 +977,8 @@ const Game = {
         this.pause(); UI.state = 'GAMEOVER'; Sys.storageRemove('block_puzzle_save');
         
         let lvNum = 1; let title = "ひよっこ🌱"; let nextScore = 500;
-        if(this.score >= 20000) { lvNum = 99; title = "伝説の神脳👑"; nextScore = null; }
-        else if(this.score >= 5000) { lvNum = 50; title = "パズル達人🔥"; nextScore = 20000; }
+        if(this.score >= 9999999) { lvNum = 99; title = "伝説の神脳👑"; nextScore = null; }
+        else if(this.score >= 5000) { lvNum = 50; title = "パズル達人🔥"; nextScore = 9999999; }
         else if(this.score >= 1000) { lvNum = 25; title = "熟練プレイヤー✨"; nextScore = 5000; }
         else if(this.score >= 500) { lvNum = 10; title = "見習い卒業👍"; nextScore = 1000; }
         else { lvNum = Math.max(1, Math.floor(this.score / 50)); title = "ルーキー🌱"; nextScore = 500; }
@@ -944,13 +986,14 @@ const Game = {
         document.getElementById('percentile-text').innerText = `Lv.${lvNum} (${title})`;
         if(nextScore) document.getElementById('next-level-text').innerText = `💡 次の称号まで あと ${nextScore - this.score} 点！`;
         else document.getElementById('next-level-text').innerText = `🎉 カンスト達成！あなたは天才です！`;
+        
         document.getElementById('max-combo-text').innerText = `今回の最大連鎖: ${this.maxCombo} コンボ！`;
 
         UI.update(); Ranking.checkAndSave(this.score);
     }
 };
 
-// 💡 リアルタイム設定変更
+// 8. リアルタイム設定変更
 document.getElementById('config-level').addEventListener('change', () => {
     Ranking.load();
     if(UI.state === 'MATH' || UI.state === 'TETRIS' || UI.state === 'PAUSED') {
@@ -987,22 +1030,27 @@ document.getElementById('config-speed').addEventListener('change', () => {
 const Action = {
     timer: null,
     start(act, isForce = false, e) {
-        if(e) e.preventDefault(); AudioSys.wakeUp();
+        if(e && typeof e.preventDefault === 'function') e.preventDefault(); 
+        AudioSys.wakeUp();
         if(UI.state !== 'TETRIS' || Game.isAnimating) return; 
         this.doAct(act); if(!isForce) this.timer = setInterval(() => this.doAct(act), 120);
     },
-    stop(e) { if(e) e.preventDefault(); if(this.timer) clearInterval(this.timer); },
+    stop(e) { if(e && typeof e.preventDefault === 'function') e.preventDefault(); if(this.timer) clearInterval(this.timer); },
     doAct(act) {
         if(UI.state !== 'TETRIS' || Game.isAnimating) return;
         if(act === 'left' && !Game.collide(Game.curPiece.x-1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x--; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'right' && !Game.collide(Game.curPiece.x+1, Game.curPiece.y, Game.curPiece.shape)) { Game.curPiece.x++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'drop' && !Game.collide(Game.curPiece.x, Game.curPiece.y+1, Game.curPiece.shape)) { Game.curPiece.y++; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(5); }
         else if(act === 'rotate') { const nShape = Game.curPiece.shape[0].map((_, i) => Game.curPiece.shape.map(r => r[i]).reverse()); if(!Game.collide(Game.curPiece.x, Game.curPiece.y, nShape)) { Game.curPiece.shape = nShape; CanvasSys.renderAll(Game.board, Game.curPiece); Sys.vibrate(10); } }
-        else if(act === 'hardDrop') { while(!Game.collide(Game.curPiece.x, Game.curPiece.y+1, Game.curPiece.shape)) Game.curPiece.y++; if(Game.interval) clearInterval(Game.interval); Game.merge(); Sys.vibrate(20); }
+        else if(act === 'hardDrop') { 
+            while(!Game.collide(Game.curPiece.x, Game.curPiece.y+1, Game.curPiece.shape)) Game.curPiece.y++; 
+            if(Game.interval) clearInterval(Game.interval); 
+            AudioSys.play('harddrop'); 
+            Game.merge(); Sys.vibrate(20); 
+        }
     }
 };
 
-// 💡 完全対応のキーボード読み取りシステム
 document.addEventListener('keydown', (e) => {
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
         if(UI.state === 'TETRIS' || UI.state === 'MATH') e.preventDefault(); 
@@ -1045,6 +1093,20 @@ const Viral = {
 
 const Ranking = {
     pendingScore: 0,
+    
+    // 💡 「ぶっちぎりの覇者」自動登録システム
+    async injectLegend() {
+        if(!db) return;
+        try {
+            const snap = await db.collection('ranks_level_14').get();
+            let exists = false;
+            snap.forEach(doc => { if(doc.data().name === 'ぶっちぎりの覇者') exists = true; });
+            if(!exists) {
+                await db.collection('ranks_level_14').add({ name: 'ぶっちぎりの覇者', score: 9999999, timestamp: new Date() });
+            }
+        } catch(e) {}
+    },
+
     async load() {
         const el = document.getElementById('ranking-container');
         if(typeof db === 'undefined' || !db) { el.innerHTML = '<div style="text-align:center; padding:10px; color:#f43f5e;">Firebase未設定</div>'; return; }
